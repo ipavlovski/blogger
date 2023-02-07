@@ -1,0 +1,44 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "sqlite"
+    url      = "file:./dev.db"
+}
+
+model Post {
+    id    Int    @id @default(autoincrement())
+    url   String
+    title String
+
+    contents Content[]
+    tags     Tag[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now())
+}
+
+model Content {
+    id       Int    @id @default(autoincrement())
+    postId   Int
+    post     Post   @relation(fields: [postId], references: [id])
+    markdown String
+    index    Int    
+    files    File[]
+
+    @@unique([id, index], name: "unique_index_per_post")
+}
+
+model Tag {
+    id   Int    @id @default(autoincrement())
+    name String @unique
+    post Post[]
+}
+
+model File {
+    id       Int       @id @default(autoincrement())
+    path     String    @unique
+    metadata String    @default("{}")
+    content  Content[]
+}
