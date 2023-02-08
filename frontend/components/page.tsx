@@ -4,7 +4,7 @@ import {
 } from '@mantine/core'
 import { getHotkeyHandler, useDisclosure } from '@mantine/hooks'
 import { IconEdit } from '@tabler/icons-react'
-import { useCreateTagMutation, useFetchCurrentPost, useTagsQuery, useUpdatePostMutation } from 'frontend/api'
+import { useCreateNewContent, useCreateTagMutation, useFetchCurrentPost, useTagsQuery, useUpdatePostMutation } from 'frontend/api'
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { CodeProps } from 'react-markdown/lib/ast-to-react'
@@ -54,10 +54,10 @@ function CustomCodeComponent({ node, inline, className, children, style, ...prop
 
 
 function CustomRenderer({ markdown }: { markdown: string }) {
-
+  const md = markdown == '' ? 'Empty element' : markdown
   return (
     <ReactMarkdown
-      children={markdown}
+      children={md}
       remarkPlugins={[remarkGfm]}
       components={{
         code: CustomCodeComponent
@@ -201,6 +201,25 @@ function PostTags({ tags, postId }: {tags: Post['tags'], postId: number }) {
 }
 
 
+function AddContentButton() {
+  const createNewContent = useCreateNewContent()
+
+  const handleClick = () => {
+    createNewContent.mutate()
+  }
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+      <ActionIcon onClick={handleClick}
+        style={{ position: 'relative', right: '-60px', top: '30px' }}
+        size={40} radius="xl" variant="gradient" color='cactus.0'>
+        <IconEdit size={18} stroke={1.5}/>
+      </ActionIcon>
+    </div>
+  )
+
+}
+
 export default function Page() {
   const { classes } = useStyles()
   const { data: post } = useFetchCurrentPost()
@@ -224,8 +243,11 @@ export default function Page() {
 
       </Flex>
 
-      {post.contents.map(({ id, markdown: md }) =>
-        (<CustomRenderer markdown={md} key={id}/>)) || ''}
+      {post.contents.length == 0 ?
+        <p>Empty element, started editing</p> :
+        post.contents.map(({ id, markdown: md }) => (<CustomRenderer markdown={md} key={id}/>))}
+
+      <AddContentButton />
 
     </Container>
   )

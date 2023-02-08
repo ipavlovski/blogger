@@ -71,12 +71,12 @@ const fetchGetPost = async (postId: number): Promise<Post> => {
 }
 
 export const useFetchCurrentPost = () => {
-  const { postId } = useParams()
-  const id = parseInt(postId!)
+  const { postId: paramsPostId } = useParams()
+  const postId = parseInt(paramsPostId!)
 
   return useQuery({
-    queryKey: ['post', id],
-    queryFn: async () => fetchGetPost(id)
+    queryKey: ['post', postId],
+    queryFn: async () => fetchGetPost(postId)
   })
 }
 
@@ -174,6 +174,31 @@ export const useCreateTagMutation = () => {
     mutationFn: (name: string) => fetchCreateTag(name),
     onSuccess: () => {
       queryClient.invalidateQueries(['tags'])
+    },
+  })
+}
+
+/**
+ * Add new content
+ * /post/:id/content
+ */
+
+
+const fetchPostNewContent = async (postId: number) => {
+  return fetch(`${SERVER_URL}/post/${postId}/content`, { method: 'POST' })
+}
+
+export const useCreateNewContent = () => {
+  const queryClient = useQueryClient()
+
+  const { postId: paramsPostId } = useParams()
+  const postId = parseInt(paramsPostId!)
+
+
+  return useMutation({
+    mutationFn: () => fetchPostNewContent(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['post', postId])
     },
   })
 }
