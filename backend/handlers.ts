@@ -2,7 +2,7 @@ import { Prisma, PrismaClient } from '@prisma/client'
 import { randomUUID as uuidv4 } from 'node:crypto'
 import { writeFile } from 'fs/promises'
 
-type TagOp = { add: string[], remove: string[]}
+export type TagOp = { add: string[], remove: string[]}
 
 const prisma = new PrismaClient()
 

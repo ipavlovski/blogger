@@ -2,6 +2,7 @@ import { Container, MantineProvider, MantineThemeOverride } from '@mantine/core'
 import { NotificationsProvider } from '@mantine/notifications'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom'
+import { newPostAction } from '../api'
 import Header from 'components/header'
 import Page from 'components/page'
 import Posts from 'components/posts'
@@ -19,27 +20,6 @@ const globalTheme: MantineThemeOverride = {
   }
 }
 
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Root />,
-    children: [
-      {
-        index: true,
-        element: <Posts />
-      },
-      {
-        children: [
-          {
-            path: 'posts/:postId',
-            element: <Page />,
-          },
-        ],
-      },
-    ],
-  },
-])
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -47,6 +27,23 @@ const queryClient = new QueryClient({
     },
   },
 })
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <Root />,
+    children: [
+      {
+        path: 'posts/:postId',
+        element: <Page />,
+      },
+      {
+        index: true,
+        element: <Posts />,
+      },
+    ],
+  },
+])
 
 
 function Root() {
