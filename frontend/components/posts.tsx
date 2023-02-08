@@ -1,13 +1,14 @@
 import { ActionIcon, Button, createStyles, Flex, MultiSelect, Text } from '@mantine/core'
 import { IconFilter, IconPlaylistAdd } from '@tabler/icons-react'
-import { useCreateNewPostMutation, useFetchAllPosts } from 'frontend/api'
+import { useCreateNewPostMutation, useFetchAllPosts, useFetchFilteredPosts, useFilterStore, useTagsQuery } from 'frontend/api'
 import { useState } from 'react'
 import { Form, Link, useNavigate } from 'react-router-dom'
 import type { Posts } from 'backend/handlers'
+import { create } from 'zustand'
 
 
 function PostList() {
-  const { data: blogposts } = useFetchAllPosts()
+  const { data: blogposts, status } = useFetchFilteredPosts()
   if (! blogposts) return <h3>No blogposts found.</h3>
 
   return(
@@ -36,29 +37,29 @@ function PostItem({ post }: {post: Posts[0]}) {
 
 
 function QueryInput() {
-  const [data, setData] = useState<string[]>([])
+  const selectedTags = useFilterStore((store) => store.tags)
+  const { setTags } = useFilterStore((store) => store.actions)
+  const { data: allTags } = useTagsQuery()
+  if (! allTags) return null
+
 
   return (
     <MultiSelect
       style={{ flexGrow: 1 }}
-      data={data}
-      placeholder=""
+      data={allTags.map(({ name }) => ({ value: name, label: `#${name}` }))}
       searchable
       radius={'lg'}
       rightSection={<></>}
       icon={<IconFilter size={24} stroke={2} />}
       label="(query blogposts)"
       mb={24}
-      styles={() => ({ input: { padding: 2 }, label: { color: '#2BBC8A', fontSize: 14 } })}
+      styles={(theme) => ({
+        input: { padding: 2 },
+        label: { color: theme.colors.cactus[0], fontSize: 14 } })
+      }
+      value={selectedTags}
+      onChange={setTags}
 
-    // value={value}
-    // onChange={setValue}
-    // size={'sm'}\
-    // className={classes.query}
-    // onSearchChange={(input) => setInput(input)}
-    // onCreate={handleCreate}
-    // onKeyDown={getHotkeyHandler([['ctrl+Enter', handleSubmit]])}
-    // spellCheck={false}
     />
   )
 }

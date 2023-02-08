@@ -3,20 +3,61 @@ import type { QueryClient } from '@tanstack/react-query'
 import type { Posts, Post, TagOp } from 'backend/handlers'
 import { SERVER_URL } from 'components/app'
 import { redirect, useParams } from 'react-router-dom'
+import { create } from 'zustand'
+
+
+/**
+ * Zustand: filter-store
+ */
+
+interface FilterStore {
+  tags: string[]
+  actions: {
+    addTag: (tag: string) => void
+    removeTag: (tag: string) => void
+    setTags: (tags: string[]) => void
+  }
+}
+
+export const useFilterStore = create<FilterStore>((set) => ({
+  tags: [],
+  actions: {
+    setTags: (tags) => set(() => ({ tags })),
+    addTag: (tag) => set((state) => ({ tags: [...state.tags, tag] })),
+    removeTag: (tag) => set((state) => ({ tags: state.tags.filter((t) => t != tag) })),
+  },
+}))
 
 
 /**
  * GET /posts
  */
 
+
 const fetchGetAllPosts = async (): Promise<Posts> => {
   return await fetch(`${SERVER_URL}/posts`).then((res) => res.json())
+}
+
+// console.log(`?x=${encodeURIComponent('[asdf,sdfasdf,3434:34]')}`)
+const fetchFilteredPosts = async (tags: string[]): Promise<Posts> => {
+  if (tags.length == 0) return await fetchGetAllPosts()
+
+  const encodedTags = encodeURIComponent(tags.toString())
+  return await fetch(`${SERVER_URL}/posts?tags=${encodedTags}`).then((res) => res.json())
 }
 
 export const useFetchAllPosts = () => {
   return useQuery({
     queryKey: ['posts'],
     queryFn: async () => fetchGetAllPosts()
+  })
+}
+
+export const useFetchFilteredPosts = () => {
+  const tags = useFilterStore((state) => state.tags)
+  return useQuery({
+    queryKey: ['posts', tags],
+    queryFn: () => fetchFilteredPosts(tags),
   })
 }
 

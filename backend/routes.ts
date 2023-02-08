@@ -11,9 +11,19 @@ const upload = multer({ storage: storage, preservePath: true })
 /**
  * Get a list of all the blogposts
  */
+
+const PostsQueryParams = z.object({
+  tags: z.string().transform((v) => v && decodeURIComponent(v).split(','))
+    .pipe(z.string().array()).optional()
+})
+
+
 routes.get('/posts', async (req, res) => {
   try {
-    const posts = await h.getAllPosts()
+    const queryParams = PostsQueryParams.parse(req.query)
+    const posts = queryParams.tags && queryParams.tags.length > 0 ?
+      await h.getFilteredPosts(queryParams.tags) :
+      await h.getAllPosts()
 
     return res.json(posts)
   } catch (err) {

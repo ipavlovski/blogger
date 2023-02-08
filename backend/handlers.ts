@@ -38,6 +38,13 @@ export async function getAllPosts() {
   })
 }
 
+export async function getFilteredPosts(tags: string[]) {
+  return await prisma.post.findMany({
+    where: { tags: { some: { name: { in: tags } } } },
+    include: { tags: true }
+  })
+}
+
 export async function updateTagsOnMultiplePosts({ posts, tags }: { posts: number[], tags: TagOp }) {
   for (const postId of posts) await updatePostTags(postId, tags)
 }
