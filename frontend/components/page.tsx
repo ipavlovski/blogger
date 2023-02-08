@@ -1,18 +1,18 @@
 import {
   ActionIcon, Anchor, Container, createStyles,
-  Flex, HoverCard, Stack, Text, TextInput
+  Flex, HoverCard, MultiSelect, Select, Stack, Text, TextInput
 } from '@mantine/core'
 import { getHotkeyHandler, useDisclosure } from '@mantine/hooks'
 import { IconEdit } from '@tabler/icons-react'
-import { useFetchPost, useUpdatePostMutation } from 'frontend/api'
+import { useCreateTagMutation, useFetchCurrentPost, useTagsQuery, useUpdatePostMutation } from 'frontend/api'
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { CodeProps } from 'react-markdown/lib/ast-to-react'
-import { useParams } from 'react-router-dom'
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript'
 import { okaidia } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import remarkGfm from 'remark-gfm'
+import type { TagOp, Post } from 'backend/handlers'
 
 SyntaxHighlighter.registerLanguage('typescript', typescript)
 
@@ -66,18 +66,20 @@ function CustomRenderer({ markdown }: { markdown: string }) {
   )
 }
 
-
-function PostTitle({ title: initTitle }: { title: string }) {
+/**
+ * title: initial title used for seeding title state, can be edited
+ * postId: needed to perform mutation query to update title on the server
+ */
+function PostTitle({ title: initTitle, postId }: { title: string, postId: number }) {
   const { classes } = useStyles()
 
-  const { postId } = useParams()
   const [title, setTitle] = useState(initTitle)
   const [isEditing, { open: startEdit, close: stopEdit }] = useDisclosure(false)
-  const postMutation = useUpdatePostMutation(postId!)
+  const postMutation = useUpdatePostMutation(postId)
 
   const handleSubmit = async () => {
     stopEdit()
-    postMutation.mutate([{ postId: postId!, title }])
+    postMutation.mutate([{ postId, title }])
   }
 
   return (
@@ -115,15 +117,93 @@ function PostTitle({ title: initTitle }: { title: string }) {
         </ActionIcon>
       </HoverCard.Dropdown>
     </HoverCard>
-
-
   )
 }
 
+function PostTags({ tags, postId }: {tags: Post['tags'], postId: number }) {
+
+  const { classes } = useStyles()
+
+  const [isEditing, { open: startEdit, close: stopEdit }] = useDisclosure(false)
+  const [value, setValue] = useState<string[]>(() => tags.map(({ name }) => name))
+
+  const updatePostMutation = useUpdatePostMutation(postId)
+  const addTagsMutation = useCreateTagMutation()
+  const { data: allTags } = useTagsQuery()
+
+
+  if (! allTags) return null
+
+  const handleSubmit = async () => {
+    stopEdit()
+    const initTags = tags.map(({ name }) => name)
+    const setDiff = (arr1: string[], arr2: string[]) => arr1.filter((x) => !arr2.includes(x))
+    const removed = setDiff(initTags, value)
+    const added = setDiff(value, initTags)
+    updatePostMutation.mutate([{ postId, tags: { add: added, remove: removed } }])
+  }
+
+  return (
+    <HoverCard disabled={isEditing} shadow="sm" position='right' openDelay={300}
+      styles={{ dropdown: { background: 'none', border: 'none' } }}>
+      <HoverCard.Target>
+        {isEditing ?
+          <MultiSelect
+            autoFocus
+            data={allTags.map(({ name }) => ({ value: name, label: `#${name}` }))}
+            placeholder="Select tags"
+            width={800}
+            maxDropdownHeight={400}
+            transitionDuration={150}
+            transition="pop-top-left"
+            transitionTimingFunction="ease"
+            // style={{ flexGrow: 1 }}
+            classNames={{
+              input: classes.subHeadline
+            }}
+            styles={{
+              input: {
+                backgroundColor: 'transparent'
+              },
+              root: {
+                // display: 'inline-block',
+                marginBottom: 14
+              }
+            }}
+            value={value}
+            onChange={setValue}
+            searchable
+            creatable
+            getCreateLabel={(query) => `+ Create tag #${query}`}
+            onCreate={(query) => {
+              addTagsMutation.mutate(query)
+              return null
+            }}
+            onKeyDown={getHotkeyHandler([['Escape', handleSubmit]])}
+          />
+          :
+          <Flex gap={12}>
+            {tags.length == 0 ?
+              <Anchor component="button" td='underline'>#untagged</Anchor> :
+              tags.map((v) => (
+                <Anchor component="button" td='underline' key={v.id}>#{v.name}</Anchor>
+              ))}
+          </Flex>}
+      </HoverCard.Target>
+      <HoverCard.Dropdown>
+        <ActionIcon onClick={startEdit}
+          size={32} radius="xl" variant="transparent" color='cactus.0'>
+          <IconEdit size={26} stroke={1.5}/>
+        </ActionIcon>
+      </HoverCard.Dropdown>
+    </HoverCard>
+  )
+}
+
+
 export default function Page() {
   const { classes } = useStyles()
-  const { postId } = useParams()
-  const { data: post } = useFetchPost(postId!)
+  const { data: post } = useFetchCurrentPost()
 
   if (! post) return null
 
@@ -132,7 +212,7 @@ export default function Page() {
 
   return (
     <Container size={700} pt={30} >
-      <PostTitle title={post.title}/>
+      <PostTitle title={post.title} postId={post.id}/>
       <Flex gap={24} mb={48}>
 
         <Stack spacing={0} className={classes.dates}>
@@ -140,11 +220,7 @@ export default function Page() {
           <Text size={13}>Updated: {updatedAt.substring(0, 16).replace('T', ' ')}</Text>
         </Stack>
 
-        <Flex gap={12}>
-          {post?.tags.map((v) => (
-            <Anchor component="button" type="button" td='underline' key={v.id}>#{v.name}</Anchor>
-          ))}
-        </Flex>
+        <PostTags tags={post.tags} postId={post.id}/>
 
       </Flex>
 

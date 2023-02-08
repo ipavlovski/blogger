@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import type { QueryClient } from '@tanstack/react-query'
 import type { Posts, Post, TagOp } from 'backend/handlers'
 import { SERVER_URL } from 'components/app'
-import { redirect } from 'react-router-dom'
+import { redirect, useParams } from 'react-router-dom'
 
 
 /**
@@ -25,14 +25,17 @@ export const useFetchAllPosts = () => {
  * GET /post/:id
  */
 
-const fetchGetPost = async (postId: string): Promise<Post> => {
+const fetchGetPost = async (postId: number): Promise<Post> => {
   return fetch(`${SERVER_URL}/post/${postId}`).then((res) => res.json())
 }
 
-export const useFetchPost = (postId: string) => {
+export const useFetchCurrentPost = () => {
+  const { postId } = useParams()
+  const id = parseInt(postId!)
+
   return useQuery({
-    queryKey: ['post', postId],
-    queryFn: async () => fetchGetPost(postId)
+    queryKey: ['post', id],
+    queryFn: async () => fetchGetPost(id)
   })
 }
 
@@ -67,12 +70,12 @@ export const newPostAction = (queryClient: QueryClient) => {
 }
 
 /**
- * POST /post
- * create new post
+ * PUT /post
+ * update post deails (title/tags)
  */
 
 const fetchUpdatePost = async ({ postId, title, tags }:
-{postId: string, title?: string, tags?: TagOp}) => {
+{postId: number, title?: string, tags?: TagOp}) => {
 
   return fetch(`${SERVER_URL}/post/${postId}`, {
     method: 'PUT',
@@ -81,7 +84,7 @@ const fetchUpdatePost = async ({ postId, title, tags }:
   })
 }
 
-export const useUpdatePostMutation = (postId: string) => {
+export const useUpdatePostMutation = (postId: number) => {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -90,6 +93,46 @@ export const useUpdatePostMutation = (postId: string) => {
     onSuccess: () => {
       queryClient.invalidateQueries(['posts'])
       queryClient.invalidateQueries(['post', postId])
+    },
+  })
+}
+
+/**
+ * Query tags
+ */
+
+
+const fetchGetAllTags = async (): Promise<{ name: string }[]> => {
+  return await fetch(`${SERVER_URL}/tags`).then((res) => res.json())
+}
+
+export const useTagsQuery = () => {
+  return useQuery({
+    queryKey: ['tags'],
+    queryFn: async () => fetchGetAllTags()
+  })
+}
+
+
+/**
+ * Add/Remove tags
+ */
+
+const fetchCreateTag = async (name: string) => {
+  return fetch(`${SERVER_URL}/tag`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name }),
+  })
+}
+
+export const useCreateTagMutation = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (name: string) => fetchCreateTag(name),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['tags'])
     },
   })
 }
