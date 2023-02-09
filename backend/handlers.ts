@@ -142,9 +142,11 @@ export async function deleteTag(name: string) {
 }
 
 export async function uploadImage(postId: number, file: Express.Multer.File) {
+  // const path = `${postId}/${uuidv4()}`
 
   await mkdir(`${STORAGE_DIRECTORY}/${postId}`, { recursive: true })
-  const path = `${postId}/${uuidv4()}`
+  const now = new Date().toISOString().replace(/[-:Z]/g, '').replace(/[T.]/g, '-')
+  const path = `${postId}/${now}.png`
   await writeFile(`${STORAGE_DIRECTORY}/${path}`, file.buffer)
 
   const image = sharp(file.buffer)

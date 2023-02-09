@@ -64,12 +64,10 @@ function CustomCodeComponent({ node, inline, className, children, style, ...prop
 
 
 function Remark({ markdown }: { markdown: string }) {
-  const { classes } = useStyles()
 
   const md = markdown == '' ? 'Empty element' : markdown
   return (
     <ReactMarkdown
-      className={classes.content}
       children={md}
       remarkPlugins={[remarkGfm]}
       components={{
@@ -82,22 +80,13 @@ function Remark({ markdown }: { markdown: string }) {
 function MarkdownContent({ markdown, contentId }: {markdown: string, contentId: number}) {
   const isEditing = useContentStore((state) => state.editingIds.includes(contentId))
   const { startEdit } = useContentStore((state) => state.actions)
-
-  // return (
-  //   <div>
-  //     {isEditing ? (
-  //       <Monaco contentId={contentId} markdown={markdown} />
-  //     ) : (
-  //       <Remark markdown={markdown} />
-  //     )}
-  //   </div>
-  // )
-
+  const { classes } = useStyles()
 
   return (
     <HoverCard shadow="sm" position='right' openDelay={300}
+      // classNames={{ dropdown: classes.content }}
       styles={{ dropdown: { background: 'none', border: 'none' } }}>
-      <HoverCard.Target>
+      <HoverCard.Target >
         <div>
           {isEditing ?
             <Monaco contentId={contentId} markdown={markdown} /> :

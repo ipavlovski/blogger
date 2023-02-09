@@ -5,54 +5,50 @@ import { ClipboardEvent, useRef } from 'react'
 import { Observable, timer } from 'rxjs'
 import { debounce } from 'rxjs/operators'
 
-// import type { LeafWithImages } from 'backend/routes'
 import { SERVER_URL } from 'components/app'
 import { useContentStore, useUpdateContentText, useUploadImage } from 'frontend/api'
 
-// blobTag - 'gallery', 'inline', ...
-export async function getClipboardImage(blobTag: string) {
-  // @ts-ignore
-  const descriptor: PermissionDescriptor = { name: 'clipboard-read' }
-  const result = await navigator.permissions.query(descriptor)
+
+async function getClipboardItem() {
+  const result = await navigator.permissions.query({ name: 'clipboard-write' as PermissionName })
 
   if (result.state == 'granted' || result.state == 'prompt') {
-    const allData = await navigator.clipboard.read()
-    const data = allData[0]
-
-    if (data.types.includes('image/png')) {
-      const blob = await data.getType('image/png')
-      const formData = new FormData()
-      formData.append('image', blob, blobTag)
-
-      return formData
-    }
-    throw new Error('Missing clipboard handler')
+    const [data] = await navigator.clipboard.read()
+    return data
+  } else {
+    throw new Error('Failed to get clipboard permissions')
   }
-  throw new Error('Failed to get clipboard permissions')
 }
 
 
 export default function Monaco({ contentId, markdown }: { contentId: number, markdown: string}) {
   const editorRef = useRef<null | editor.IStandaloneCodeEditor>(null)
 
-  const { startEdit, stopEdit } = useContentStore((state) => state.actions)
+  const { stopEdit } = useContentStore((state) => state.actions)
 
   const uploadImage = useUploadImage()
   const updateContents = useUpdateContentText(contentId)
 
   const handleMonacoPaste = async (e: ClipboardEvent<HTMLInputElement>) => {
     try {
-      const formData = await getClipboardImage('inline')
-      // const { path } = await uploadGallery.mutateAsync({ leafId: leaf.id, formData: formData })
-      const { path } = await uploadImage.mutateAsync(formData)
-      path && editorRef.current!.trigger('keyboard', 'type', { text: `![](${SERVER_URL}/${path})` })
+      const data = await getClipboardItem()
 
-      e.stopPropagation()
-      e.preventDefault()
+      if (data.types.includes('image/png')) {
+        const blob = await data.getType('image/png')
+        const formData = new FormData()
+        formData.append('image', blob, 'tmp-filename')
+        const { path } = await uploadImage.mutateAsync(formData)
+        path && editorRef.current!.trigger('keyboard', 'type', {
+          text: `![](${SERVER_URL}/${path})`
+        })
+        e.stopPropagation()
+        e.preventDefault()
+      }
+
+
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
-      if (msg != 'Missing clipboard handler')
-        showNotification({ title: 'ctrl+v', message: msg, color: 'red', autoClose: 1600 })
+      showNotification({ title: 'ctrl+v', message: msg, color: 'red', autoClose: 1600 })
     }
   }
 
@@ -88,7 +84,7 @@ export default function Monaco({ contentId, markdown }: { contentId: number, mar
       console.log('escape')
 
       const content = editor.getValue()
-      if (content) updateContents.mutate({markdown: content })
+      if (content) updateContents.mutate({ markdown: content })
       stopEdit(contentId)
     })
   }
