@@ -264,14 +264,12 @@ routes.delete('/tag', async (req, res) => {
  * - pdf: verify that it is a pdf file
  */
 
-const FileUploadType = z.enum(['image', 'code', 'pdf'])
+// const FileUploadType = z.enum(['image', 'code', 'pdf'])
 
-routes.post('/upload/:id/:type', upload.single('image'), async (req, res) => {
+routes.post('/upload/:id/image', upload.single('image'), async (req, res) => {
   try {
-    const type = FileUploadType.parse(req.params.type)
+    // const type = FileUploadType.parse(req.params.type)
     const postId = parseInt(req.params.id)
-
-    if (type != 'image') throw new Error('Handlers not implemented.')
     if (req.file == null) throw new Error('Attached file is missing')
 
     const path = await h.uploadImage(postId, req.file)
@@ -283,5 +281,19 @@ routes.post('/upload/:id/:type', upload.single('image'), async (req, res) => {
   }
 })
 
+routes.post('/upload/:id/files', upload.array('files'), async (req, res) => {
+  try {
+    const postId = parseInt(req.params.id)
+    if (! req.files || req.files.length == 0 || ! (req.files instanceof Array) )
+      throw new Error('No files attached')
+
+    await h.uploadFiles(postId, req.files)
+
+    return res.json({ ok: 1 })
+  } catch (err) {
+    console.error(err)
+    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
+  }
+})
 
 export default routes

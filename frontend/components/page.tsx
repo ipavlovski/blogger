@@ -1,12 +1,13 @@
 import {
-  ActionIcon, Anchor, Container, createStyles,
+  ActionIcon, Anchor, Button, Container, createStyles,
+  FileButton,
   Flex, HoverCard, MultiSelect, Select, Stack, Text, TextInput
 } from '@mantine/core'
 import { getHotkeyHandler, useDisclosure } from '@mantine/hooks'
-import { IconEdit } from '@tabler/icons-react'
+import { IconCodeCircle2, IconEdit } from '@tabler/icons-react'
 import { useContentStore, useCreateNewContent, useCreateTagMutation, useFetchCurrentPost,
-  useTagsQuery, useUpdatePostMutation } from 'frontend/api'
-import { useState } from 'react'
+  useTagsQuery, useUpdatePostMutation, useUploadFiles } from 'frontend/api'
+import { useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { CodeProps } from 'react-markdown/lib/ast-to-react'
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -77,29 +78,38 @@ function Remark({ markdown }: { markdown: string }) {
   )
 }
 
-function MarkdownContent({ markdown, contentId }: {markdown: string, contentId: number}) {
+function ContentRenderer({ markdown, contentId, files }:
+{markdown: string, contentId: number, files: Post['contents'][0]['files']}) {
+
   const isEditing = useContentStore((state) => state.editingIds.includes(contentId))
   const { startEdit } = useContentStore((state) => state.actions)
   const { classes } = useStyles()
 
+
   return (
-    <HoverCard shadow="sm" position='right' openDelay={300}
+    <div>
+      {/* MarkdownContent */}
+      <HoverCard shadow="sm" position='right' openDelay={300}
       // classNames={{ dropdown: classes.content }}
-      styles={{ dropdown: { background: 'none', border: 'none' } }}>
-      <HoverCard.Target >
-        <div>
-          {isEditing ?
-            <Monaco contentId={contentId} markdown={markdown} /> :
-            <Remark markdown={markdown} />}
-        </div>
-      </HoverCard.Target>
-      <HoverCard.Dropdown>
-        <ActionIcon onClick={() => startEdit(contentId)}
-          size={32} radius="xl" variant="transparent" color='cactus.0'>
-          <IconEdit size={26} stroke={1.5}/>
-        </ActionIcon>
-      </HoverCard.Dropdown>
-    </HoverCard>
+        styles={{ dropdown: { background: 'none', border: 'none' } }}>
+        <HoverCard.Target >
+          <div>
+            {isEditing ?
+              <Monaco contentId={contentId} markdown={markdown} /> :
+              <Remark markdown={markdown} />}
+          </div>
+        </HoverCard.Target>
+        <HoverCard.Dropdown>
+          <ActionIcon onClick={() => startEdit(contentId)}
+            size={32} radius="xl" variant="transparent" color='cactus.0'>
+            <IconEdit size={26} stroke={1.5}/>
+          </ActionIcon>
+        </HoverCard.Dropdown>
+      </HoverCard>
+
+      {/* CodeContent */}
+      {files.length > 0 && <h3>has files</h3>}
+    </div>
   )
 
 
@@ -243,18 +253,37 @@ function PostTags({ tags, postId }: {tags: Post['tags'], postId: number }) {
 
 function AddContentButton() {
   const createNewContent = useCreateNewContent()
+  const uploadFiles = useUploadFiles()
+  const [files, setFiles] = useState<File[]>([])
+
+  useEffect(() => {
+    if (files.length == 0) return
+
+    const formData = new FormData()
+    files.forEach((file) => formData.append('files', file, file.name))
+    uploadFiles.mutateAsync(formData).then(() => setFiles([]))
+
+  }, [files])
 
   const handleClick = () => {
     createNewContent.mutate()
   }
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
       <ActionIcon onClick={handleClick}
         style={{ position: 'relative', right: '-60px', top: '30px' }}
         size={40} radius="xl" variant="gradient" color='cactus.0'>
-        <IconEdit size={18} stroke={1.5}/>
+        <IconEdit size={22} stroke={1.5}/>
       </ActionIcon>
+
+      <FileButton onChange={setFiles} multiple>
+        {(props) => <ActionIcon {...props}
+          style={{ position: 'relative', right: '-60px', top: '30px' }}
+          size={40} radius="xl" variant="gradient" gradient={{ from: 'teal', to: 'blue', deg: 20 }}>
+          <IconCodeCircle2 size={32} stroke={1.5}/>
+        </ActionIcon>}
+      </FileButton>
     </div>
   )
 
@@ -293,8 +322,8 @@ export default function Page() {
       {
         post.contents.length == 0 ?
           <p>Empty element, started editing</p> :
-          post.contents.map(({ id, markdown: md }) =>
-            (<MarkdownContent markdown={md} contentId={id} key={id}/>))
+          post.contents.map(({ id, markdown: md, files }) =>
+            (<ContentRenderer markdown={md} contentId={id} files={files} key={id}/>))
       }
 
 

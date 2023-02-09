@@ -265,3 +265,28 @@ export const useUploadImage = () => {
     },
   })
 }
+
+/**
+ * Upload files
+ */
+
+ const fetchUploadFiles = async (postId: number, formData: FormData) => {
+  return fetch(`${SERVER_URL}/upload/${postId}/files`, {
+    method: 'POST',
+    body: formData,
+  }).then((v) => v.json())
+}
+
+export const useUploadFiles = () => {
+  const queryClient = useQueryClient()
+
+  const { postId: paramsPostId } = useParams()
+  const postId = parseInt(paramsPostId!)
+
+  return useMutation({
+    mutationFn: (formData: FormData) => fetchUploadFiles(postId, formData),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['post', postId])
+    },
+  })
+}

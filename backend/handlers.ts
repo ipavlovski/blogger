@@ -67,7 +67,7 @@ export type Post = Awaited<ReturnType<typeof getPost>>
 export async function getPost(postId: number) {
   return await prisma.post.findFirstOrThrow({
     where: { id: postId },
-    include: { contents: true, tags: true }
+    include: { contents: { include: { files: true } }, tags: true }
   })
 }
 
@@ -162,5 +162,25 @@ export async function uploadImage(postId: number, file: Express.Multer.File) {
   })
 
   return path
+
+}
+
+export async function uploadFiles(postId: number, files: Express.Multer.File[]) {
+
+  await mkdir(`${STORAGE_DIRECTORY}/${postId}`, { recursive: true })
+
+  const paths = <string[]>[]
+  for (const file of files) {
+    const path = `${postId}/${file.originalname}`
+    await writeFile(`${STORAGE_DIRECTORY}/${path}`, file.buffer)
+    paths.push(path)
+  }
+
+  const markdown = ['UPLOADED CODE:\n', ...paths].join('\n')
+  const { index } = await prisma.content.findFirst({ orderBy: { index: 'desc' } }) || { index: 1 }
+
+  return await prisma.content.create({ data:
+    { index, markdown, postId, files: { create: paths.map((path) => ({ path, type: 'code' })) } }
+  })
 
 }
