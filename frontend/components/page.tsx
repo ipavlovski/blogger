@@ -7,7 +7,7 @@ import { getHotkeyHandler, useDisclosure } from '@mantine/hooks'
 import { IconCodeCircle2, IconEdit } from '@tabler/icons-react'
 import { useContentStore, useCreateNewContent, useCreateTagMutation, useFetchCurrentPost,
   useTagsQuery, useUpdatePostMutation, useUploadFiles } from 'frontend/api'
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { CodeProps } from 'react-markdown/lib/ast-to-react'
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
@@ -78,6 +78,19 @@ function Remark({ markdown }: { markdown: string }) {
   )
 }
 
+
+function CodeRunner({ path: localPath }: {path: string}) {
+  const path = `../../assets/${localPath}`
+  const modules: any = import.meta.glob('../../assets/**/*.tsx')
+  const Template = lazy(async () => await modules[path]())
+
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <Template />
+    </Suspense>
+  )
+}
+
 function ContentRenderer({ markdown, contentId, files }:
 {markdown: string, contentId: number, files: Post['contents'][0]['files']}) {
 
@@ -108,7 +121,10 @@ function ContentRenderer({ markdown, contentId, files }:
       </HoverCard>
 
       {/* CodeContent */}
-      {files.length > 0 && <h3>has files</h3>}
+      {
+        files.length > 0 && <CodeRunner path={files[0].path} />
+      }
+
     </div>
   )
 
