@@ -1,6 +1,8 @@
-import { Prisma, PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client'
 import { randomUUID as uuidv4 } from 'node:crypto'
-import { writeFile } from 'fs/promises'
+import { writeFile, mkdir } from 'node:fs/promises'
+import { STORAGE_DIRECTORY } from 'backend/config'
+import sharp from 'sharp'
 
 export type TagOp = { add: string[], remove: string[]}
 
@@ -137,4 +139,26 @@ export async function updateTagName({ newName, oldName }: { oldName: string; new
 
 export async function deleteTag(name: string) {
   await prisma.tag.delete({ where: { name } })
+}
+
+export async function uploadImage(postId: number, file: Express.Multer.File) {
+
+  await mkdir(`${STORAGE_DIRECTORY}/${postId}`, { recursive: true })
+  const path = `${postId}/${uuidv4()}`
+  await writeFile(`${STORAGE_DIRECTORY}/${path}`, file.buffer)
+
+  const image = sharp(file.buffer)
+  const metadata = await image.metadata()
+  if (metadata.width == null || metadata.height == null) throw new Error('Issue getting dimensions')
+
+  await prisma.file.create({
+    data: {
+      path: path,
+      type: 'image',
+      metadata: JSON.stringify({ width: metadata.width!, height: metadata.height! })
+    },
+  })
+
+  return path
+
 }

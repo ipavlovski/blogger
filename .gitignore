@@ -4,3 +4,4 @@ scratch.*
 dist/
 prisma/*.db*
 prisma/migrations/
+assets/

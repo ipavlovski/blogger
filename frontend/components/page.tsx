@@ -4,7 +4,8 @@ import {
 } from '@mantine/core'
 import { getHotkeyHandler, useDisclosure } from '@mantine/hooks'
 import { IconEdit } from '@tabler/icons-react'
-import { useCreateNewContent, useCreateTagMutation, useFetchCurrentPost, useTagsQuery, useUpdatePostMutation } from 'frontend/api'
+import { useContentStore, useCreateNewContent, useCreateTagMutation, useFetchCurrentPost,
+  useTagsQuery, useUpdatePostMutation } from 'frontend/api'
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { CodeProps } from 'react-markdown/lib/ast-to-react'
@@ -13,6 +14,7 @@ import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typesc
 import { okaidia } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import remarkGfm from 'remark-gfm'
 import type { TagOp, Post } from 'backend/handlers'
+import Monaco from 'components/monaco'
 
 SyntaxHighlighter.registerLanguage('typescript', typescript)
 
@@ -29,7 +31,15 @@ const useStyles = createStyles((theme) => ({
   },
   dates: {
     paddingRight: 14, borderRight: `3px solid ${theme.colors.dark[2]}`
-  }
+  },
+  content: {
+    padding: 8,
+    borderLeft: `2px solid ${theme.colors.dark[7]}`,
+    marginRight: 16,
+    '&:hover': {
+      borderLeft: `2px solid ${theme.colors.cactus[1]}`,
+    },
+  },
 }))
 
 
@@ -53,10 +63,13 @@ function CustomCodeComponent({ node, inline, className, children, style, ...prop
 }
 
 
-function CustomRenderer({ markdown }: { markdown: string }) {
+function Remark({ markdown }: { markdown: string }) {
+  const { classes } = useStyles()
+
   const md = markdown == '' ? 'Empty element' : markdown
   return (
     <ReactMarkdown
+      className={classes.content}
       children={md}
       remarkPlugins={[remarkGfm]}
       components={{
@@ -65,6 +78,44 @@ function CustomRenderer({ markdown }: { markdown: string }) {
     />
   )
 }
+
+function MarkdownContent({ markdown, contentId }: {markdown: string, contentId: number}) {
+  const isEditing = useContentStore((state) => state.editingIds.includes(contentId))
+  const { startEdit } = useContentStore((state) => state.actions)
+
+  // return (
+  //   <div>
+  //     {isEditing ? (
+  //       <Monaco contentId={contentId} markdown={markdown} />
+  //     ) : (
+  //       <Remark markdown={markdown} />
+  //     )}
+  //   </div>
+  // )
+
+
+  return (
+    <HoverCard shadow="sm" position='right' openDelay={300}
+      styles={{ dropdown: { background: 'none', border: 'none' } }}>
+      <HoverCard.Target>
+        <div>
+          {isEditing ?
+            <Monaco contentId={contentId} markdown={markdown} /> :
+            <Remark markdown={markdown} />}
+        </div>
+      </HoverCard.Target>
+      <HoverCard.Dropdown>
+        <ActionIcon onClick={() => startEdit(contentId)}
+          size={32} radius="xl" variant="transparent" color='cactus.0'>
+          <IconEdit size={26} stroke={1.5}/>
+        </ActionIcon>
+      </HoverCard.Dropdown>
+    </HoverCard>
+  )
+
+
+}
+
 
 /**
  * title: initial title used for seeding title state, can be edited
@@ -220,32 +271,43 @@ function AddContentButton() {
 
 }
 
-export default function Page() {
+function PostDate({ createdAt, updatedAt }: {createdAt: Date, updatedAt: Date}) {
   const { classes } = useStyles()
+
+  const created = createdAt as unknown as string
+  const updated = updatedAt as unknown as string
+
+  return (
+    <Stack spacing={0} className={classes.dates}>
+      <Text size={13}>Created: {created.substring(0, 16).replace('T', ' ')}</Text>
+      <Text size={13}>Updated: {updated.substring(0, 16).replace('T', ' ')}</Text>
+    </Stack>
+
+  )
+}
+
+export default function Page() {
   const { data: post } = useFetchCurrentPost()
 
   if (! post) return null
 
-  const createdAt = post.createdAt as unknown as string
-  const updatedAt = post.updatedAt as unknown as string
 
   return (
     <Container size={700} pt={30} >
       <PostTitle title={post.title} postId={post.id}/>
       <Flex gap={24} mb={48}>
-
-        <Stack spacing={0} className={classes.dates}>
-          <Text size={13}>Created: {createdAt.substring(0, 16).replace('T', ' ')}</Text>
-          <Text size={13}>Updated: {updatedAt.substring(0, 16).replace('T', ' ')}</Text>
-        </Stack>
-
+        <PostDate createdAt={post.createdAt} updatedAt={post.updatedAt}/>
         <PostTags tags={post.tags} postId={post.id}/>
 
       </Flex>
 
-      {post.contents.length == 0 ?
-        <p>Empty element, started editing</p> :
-        post.contents.map(({ id, markdown: md }) => (<CustomRenderer markdown={md} key={id}/>))}
+      {
+        post.contents.length == 0 ?
+          <p>Empty element, started editing</p> :
+          post.contents.map(({ id, markdown: md }) =>
+            (<MarkdownContent markdown={md} contentId={id} key={id}/>))
+      }
+
 
       <AddContentButton />
 

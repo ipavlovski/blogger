@@ -39,6 +39,7 @@ model Tag {
 model File {
     id       Int       @id @default(autoincrement())
     path     String    @unique
+    type     String
     metadata String    @default("{}")
     content  Content[]
 }

@@ -29,6 +29,23 @@ export const useFilterStore = create<FilterStore>((set) => ({
 }))
 
 
+interface ContentStore {
+  editingIds: number[],
+  actions: {
+    startEdit: (contentId: number) => void
+    stopEdit: (contentId: number) => void
+  }
+}
+
+export const useContentStore = create<ContentStore>((set) => ({
+  editingIds: [],
+  actions: {
+    startEdit: (id) => set((state) => ({ editingIds: [...state.editingIds, id] })),
+    stopEdit: (id) => set((state) => ({ editingIds: state.editingIds.filter((t) => t != id) })),
+  }
+}))
+
+
 /**
  * GET /posts
  */
@@ -101,14 +118,6 @@ export const useCreateNewPostMutation = () => {
   })
 }
 
-export const newPostAction = (queryClient: QueryClient) => {
-  // console.log('clicked?!')
-  return async ({ request, params }: {request: any, params: any}) => {
-    const postId = await fetchPostNewPost()
-    queryClient.invalidateQueries({ queryKey: ['posts'] })
-    return redirect(`/posts/${postId}`)
-  }
-}
 
 /**
  * PUT /post
@@ -197,6 +206,60 @@ export const useCreateNewContent = () => {
 
   return useMutation({
     mutationFn: () => fetchPostNewContent(postId),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['post', postId])
+    },
+  })
+}
+
+/**
+ * Update content
+ * PUT /content/:id
+ */
+
+const fetchUpdateContent = async ({ contentId, index, markdown }:
+{contentId: number, index?: number, markdown?: string}) => {
+  return fetch(`${SERVER_URL}/content/${contentId}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ index, markdown }),
+  })
+}
+
+export const useUpdateContentText = (contentId: number) => {
+  const queryClient = useQueryClient()
+
+  const { postId: paramsPostId } = useParams()
+  const postId = parseInt(paramsPostId!)
+
+  return useMutation({
+    mutationFn: ({ index, markdown }: {index?: number, markdown?: string}) =>
+      fetchUpdateContent({ contentId, index, markdown }),
+    onSuccess: () => {
+      queryClient.invalidateQueries(['post', postId])
+    },
+  })
+}
+
+/**
+ * Upload image
+ */
+
+const fetchUploadImage = async (postId: number, formData: FormData) => {
+  return fetch(`${SERVER_URL}/upload/${postId}/image`, {
+    method: 'POST',
+    body: formData,
+  }).then((v) => v.json())
+}
+
+export const useUploadImage = () => {
+  const queryClient = useQueryClient()
+
+  const { postId: paramsPostId } = useParams()
+  const postId = parseInt(paramsPostId!)
+
+  return useMutation({
+    mutationFn: (formData: FormData) => fetchUploadImage(postId, formData),
     onSuccess: () => {
       queryClient.invalidateQueries(['post', postId])
     },

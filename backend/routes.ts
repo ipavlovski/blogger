@@ -266,17 +266,22 @@ routes.delete('/tag', async (req, res) => {
 
 const FileUploadType = z.enum(['image', 'code', 'pdf'])
 
-routes.post('/upload/:type', async (req, res) => {
+routes.post('/upload/:id/:type', upload.single('image'), async (req, res) => {
   try {
     const type = FileUploadType.parse(req.params.type)
+    const postId = parseInt(req.params.id)
 
-    console.log('Will handle this later...')
+    if (type != 'image') throw new Error('Handlers not implemented.')
+    if (req.file == null) throw new Error('Attached file is missing')
 
-    return res.sendStatus(200)
+    const path = await h.uploadImage(postId, req.file)
+
+    return res.json({ path })
   } catch (err) {
     console.error(err)
     return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
   }
 })
+
 
 export default routes
