@@ -17,21 +17,6 @@ const updatePostTags = async (postId: number, tags: TagOp) => {
   })
 }
 
-const reindexContents = async (postId: number, newIndex: number) => {
-  // get all the current contents of the post, need only id + index for the function
-  const postContents = await prisma.content.findMany({
-    where: { postId }, select: { id: true, index: true }
-  })
-
-  // filter and sort in reverse, since inds in DB have to be unique
-  const sortedContents = postContents.filter(({ index: ind }) => ind >= newIndex)
-    .sort((a, b) => b.index - a.index)
-
-  // run the query
-  for (const content of sortedContents) await prisma.content.update({
-    where: { id: content.id }, data: { index: content.index + 1 }
-  })
-}
 
 export type Posts = Awaited<ReturnType<typeof getAllPosts>>
 export async function getAllPosts() {
@@ -90,29 +75,29 @@ export async function deletePost(postId: number) {
 }
 
 
-export async function createContentEntry(postId: number,
-  { index }: { index?: number | undefined }) {
+export async function createContentEntry(postId: number) {
+  const { index } = await prisma.content.findFirst({ orderBy: { index: 'desc' } }) || { index: 1 }
+  return await prisma.content.create({ data: { index, markdown: '', postId } })
+}
 
+
+export async function updateContentIndex(contentId: number, index: number) {
+  const { postId } = await prisma.content.findFirstOrThrow({ where: { id: contentId } })
+
+  // get all the current contents of the post, need only id + index for the function
   const postContents = await prisma.content.findMany({
     where: { postId }, select: { id: true, index: true }
   })
 
-  let newInd: number
-  if (postContents.length == 0) {
-    newInd = 1
-  } else if (index == null) {
-    newInd = Math.max(...postContents.map(({ index }) => index)) + 1
-  } else {
-    reindexContents(postId, index)
-    newInd = index
-  }
+  // filter and sort in reverse, since inds in DB have to be unique
+  const sortedContents = postContents.filter(({ index: ind }) => ind >= index)
+    .sort((a, b) => b.index - a.index)
 
-  return await prisma.content.create({ data: { index: newInd, markdown: '', postId } })
-}
+  // run the query
+  for (const content of sortedContents) await prisma.content.update({
+    where: { id: content.id }, data: { index: content.index + 1 }
+  })
 
-export async function updateContentIndex(contentId: number, index: number) {
-  const { postId } = await prisma.content.findFirstOrThrow({ where: { id: contentId } })
-  await reindexContents(postId, index)
   await prisma.content.update({ where: { id: contentId }, data: { index } })
 }
 

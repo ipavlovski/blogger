@@ -123,18 +123,13 @@ routes.delete('/post/:id', async (req, res) => {
 })
 
 /**
- * Create new content entry (may include index)
- * If index is provided, will need to re-index the other content entries
+ * Create new content entry
  */
-const NewContentBody = z.object({
-  index: z.number().optional()
-})
 
 routes.post('/post/:id/content', async (req, res) => {
   try {
     const postId = parseInt(req.params.id)
-    const index = NewContentBody.parse(req.body)
-    const { id } = await h.createContentEntry(postId, index)
+    const { id } = await h.createContentEntry(postId)
 
     return res.json({ contentId: id })
   } catch (err) {
