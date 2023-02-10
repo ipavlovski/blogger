@@ -129,7 +129,8 @@ function ContentRenderer({ markdown, contentId, files }:
 
       {/* CodeContent */}
       {
-        files.length > 0 && <CodeRunner path={files[0].path} />
+        files.filter((file) => file.path.endsWith('tsx')).length > 0 &&
+        <CodeRunner path={files[0].path} />
       }
 
     </div>

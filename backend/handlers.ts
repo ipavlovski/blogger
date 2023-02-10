@@ -126,8 +126,9 @@ export async function deleteTag(name: string) {
   await prisma.tag.delete({ where: { name } })
 }
 
-export async function uploadImage(postId: number, file: Express.Multer.File) {
+export async function uploadImage(contentId: number, file: Express.Multer.File) {
   // const path = `${postId}/${uuidv4()}`
+  const { postId } = await prisma.content.findFirstOrThrow({ where: { id: contentId } })
 
   await mkdir(`${STORAGE_DIRECTORY}/${postId}`, { recursive: true })
   const now = new Date().toISOString().replace(/[-:Z]/g, '').replace(/[T.]/g, '-')
@@ -141,8 +142,8 @@ export async function uploadImage(postId: number, file: Express.Multer.File) {
   await prisma.file.create({
     data: {
       path: path,
-      type: 'image',
-      metadata: JSON.stringify({ width: metadata.width!, height: metadata.height! })
+      metadata: JSON.stringify({ width: metadata.width!, height: metadata.height! }),
+      contentId
     },
   })
 
@@ -166,7 +167,7 @@ export async function uploadFiles(postId: number, files: Express.Multer.File[]) 
   const { index } = await prisma.content.findFirst({ orderBy: { index: 'desc' } }) || { index: 1 }
 
   return await prisma.content.create({ data:
-    { index, markdown, postId, files: { create: paths.map((path) => ({ path, type: 'code' })) } }
+    { index, markdown, postId, files: { create: paths.map((path) => ({ path })) } }
   })
 
 }

@@ -24,7 +24,7 @@ model Content {
     postId   Int
     post     Post   @relation(fields: [postId], references: [id])
     markdown String
-    index    Int    
+    index    Int
     files    File[]
 
     @@unique([id, index], name: "unique_index_per_post")
@@ -37,9 +37,9 @@ model Tag {
 }
 
 model File {
-    id       Int       @id @default(autoincrement())
-    path     String    @unique
-    type     String
-    metadata String    @default("{}")
-    content  Content[]
+    id        Int     @id @default(autoincrement())
+    path      String  @unique
+    metadata  String  @default("{}")
+    content   Content @relation(fields: [contentId], references: [id])
+    contentId Int
 }

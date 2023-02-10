@@ -138,6 +138,29 @@ routes.post('/post/:id/content', async (req, res) => {
   }
 })
 
+
+/**
+ * Upload a new file: image, code, pdf
+ * - image: get dimensions, verify format
+ * - code: one or multiple files, ensure one file, need to check if 'runnnable'
+ * - pdf: verify that it is a pdf file
+ */
+
+routes.put('/content/:id/image', upload.single('image'), async (req, res) => {
+  try {
+    const contentId = parseInt(req.params.id)
+    if (req.file == null) throw new Error('Attached file is missing')
+
+    const path = await h.uploadImage(contentId, req.file)
+
+    return res.json({ path })
+  } catch (err) {
+    console.error(err)
+    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
+  }
+})
+
+
 /**
  * Update content entry or re-index
  * Either provide markdown for updating
@@ -148,7 +171,7 @@ const UpdateContentBody = z.object({
   markdown: z.string().optional()
 })
 
-routes.put('/content/:id', async (req, res) => {
+routes.put('/content/:id/markdown', async (req, res) => {
   try {
     const contentId = parseInt(req.params.id)
     const { index, markdown } = UpdateContentBody.parse(req.body)
@@ -246,30 +269,6 @@ routes.delete('/tag', async (req, res) => {
     await h.deleteTag(name)
 
     return res.sendStatus(200)
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-/**
- * Upload a new file: image, code, pdf
- * - image: get dimensions, verify format
- * - code: one or multiple files, ensure one file, need to check if 'runnnable'
- * - pdf: verify that it is a pdf file
- */
-
-// const FileUploadType = z.enum(['image', 'code', 'pdf'])
-
-routes.post('/upload/:id/image', upload.single('image'), async (req, res) => {
-  try {
-    // const type = FileUploadType.parse(req.params.type)
-    const postId = parseInt(req.params.id)
-    if (req.file == null) throw new Error('Attached file is missing')
-
-    const path = await h.uploadImage(postId, req.file)
-
-    return res.json({ path })
   } catch (err) {
     console.error(err)
     return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })

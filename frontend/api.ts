@@ -213,13 +213,13 @@ export const useCreateNewContent = () => {
 }
 
 /**
- * Update content
- * PUT /content/:id
+ * Update contents
+ * PUT /content/:id/markdown
  */
 
 const fetchUpdateContent = async ({ contentId, index, markdown }:
 {contentId: number, index?: number, markdown?: string}) => {
-  return fetch(`${SERVER_URL}/content/${contentId}`, {
+  return fetch(`${SERVER_URL}/content/${contentId}/markdown`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ index, markdown }),
@@ -241,28 +241,30 @@ export const useUpdateContentText = (contentId: number) => {
   })
 }
 
+
 /**
- * Upload image
+ * Upload images
+ * PUT /content/:id/image
  */
 
-const fetchUploadImage = async (postId: number, formData: FormData) => {
-  return fetch(`${SERVER_URL}/upload/${postId}/image`, {
-    method: 'POST',
+const fetchUploadImage = async (contentId: number, formData: FormData) => {
+  return fetch(`${SERVER_URL}/content/${contentId}/image`, {
+    method: 'PUT',
     body: formData,
   }).then((v) => v.json())
 }
 
-export const useUploadImage = () => {
-  const queryClient = useQueryClient()
+export const useUploadImage = (contentId: number) => {
+  // const queryClient = useQueryClient()
 
   const { postId: paramsPostId } = useParams()
-  const postId = parseInt(paramsPostId!)
+  // const postId = parseInt(paramsPostId!)
 
   return useMutation({
-    mutationFn: (formData: FormData) => fetchUploadImage(postId, formData),
-    onSuccess: () => {
-      queryClient.invalidateQueries(['post', postId])
-    },
+    mutationFn: (formData: FormData) => fetchUploadImage(contentId, formData),
+    // onSuccess: () => {
+    //   queryClient.invalidateQueries(['post', postId])
+    // },
   })
 }
 

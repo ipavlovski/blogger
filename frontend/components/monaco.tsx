@@ -26,7 +26,7 @@ export default function Monaco({ contentId, markdown }: { contentId: number, mar
 
   const { stopEdit } = useContentStore((state) => state.actions)
 
-  const uploadImage = useUploadImage()
+  const uploadImage = useUploadImage(contentId)
   const updateContents = useUpdateContentText(contentId)
 
   const handleMonacoPaste = async (e: ClipboardEvent<HTMLInputElement>) => {
