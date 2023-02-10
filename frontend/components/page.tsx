@@ -80,15 +80,22 @@ function Remark({ markdown }: { markdown: string }) {
 
 
 function CodeRunner({ path: localPath }: {path: string}) {
-  const path = `../../assets/${localPath}`
-  const modules: any = import.meta.glob('../../assets/**/*.tsx')
-  const Template = lazy(async () => await modules[path]())
+  try {
 
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <Template />
-    </Suspense>
-  )
+    const path = `../../assets/${localPath}`
+    const modules: any = import.meta.glob('../../assets/**/*.tsx')
+    const Template = lazy(async () => await modules[path]())
+
+    return (
+      <Suspense fallback={<div>Loading...</div>}>
+        <Template />
+      </Suspense>
+    )
+  } catch {
+    return <h3>Something failed along the way...</h3>
+  }
+
+
 }
 
 function ContentRenderer({ markdown, contentId, files }:

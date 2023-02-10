@@ -17,7 +17,7 @@ app.use(cors())
 app.use(morgan(':method :url :response-time'))
 
 // serve the static files
-app.use(express.static(`${__dirname}/dist`))
+// app.use(express.static(`${__dirname}/../dist`))
 app.use(express.static(STORAGE_DIRECTORY))
 
 // use the routes

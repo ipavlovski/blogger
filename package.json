@@ -4,7 +4,7 @@
     "repl": "while true; do /usr/bin/ts-node -e 'console.clear(); console.log(\"ready\")' -i; sleep 0; done",
     "tsnd": "/usr/bin/tsnd -r dotenv/config -r tsconfig-paths/register --exit-child --respawn --clear backend/init.ts",
     "dev": "vite frontend",
-    "build": "vite build frontend",
+    "build": "vite build frontend --watch",
     "prisma": "prisma migrate dev --name init"
   },
   "dependencies": {
@@ -52,6 +52,7 @@
     "monaco-editor": "^0.35.0",
     "sass": "^1.58.0",
     "tsconfig-paths": "^4.1.2",
-    "vite": "^4.1.1"
+    "vite": "^4.1.1",
+    "vite-plugin-restart": "^0.3.1"
   }
 }

@@ -176,6 +176,7 @@ export async function uploadFiles(postId: number, files: Express.Multer.File[]) 
     paths.push(path)
   }
 
+  await writeFile(`${__dirname}/../trigger.txt`, `${Math.random()}`, { encoding: 'utf-8' })
   const markdown = ['UPLOADED CODE:\n', ...paths].join('\n')
   const { index } = await prisma.content.findFirst({ orderBy: { index: 'desc' } }) || { index: 1 }
 
