@@ -16,6 +16,7 @@ import { okaidia } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import remarkGfm from 'remark-gfm'
 import type { TagOp, Post } from 'backend/handlers'
 import Monaco from 'components/monaco'
+import CustomCodeComponent from 'components/code'
 
 SyntaxHighlighter.registerLanguage('typescript', typescript)
 
@@ -42,26 +43,6 @@ const useStyles = createStyles((theme) => ({
     },
   },
 }))
-
-
-function CustomCodeComponent({ node, inline, className, children, style, ...props }: CodeProps) {
-  const match = /language-(\w+)/.exec(className || '')
-
-  return !inline && match ? (
-    <SyntaxHighlighter
-      children={String(children).replace(/\n$/, '')}
-      language={match[1]}
-      style={okaidia}
-      showLineNumbers={true}
-      PreTag="div"
-      {...props}
-    />
-  ) : (
-    <code className={className} {...props}>
-      {children}
-    </code>
-  )
-}
 
 
 function Remark({ markdown }: { markdown: string }) {
@@ -335,7 +316,7 @@ export default function Page() {
 
 
   return (
-    <Container size={700} pt={30} >
+    <>
       <PostTitle title={post.title} postId={post.id}/>
       <Flex gap={24} mb={48}>
         <PostDate createdAt={post.createdAt} updatedAt={post.updatedAt}/>
@@ -350,9 +331,8 @@ export default function Page() {
             (<ContentRenderer markdown={md} contentId={id} files={files} key={id}/>))
       }
 
-
       <AddContentButton />
 
-    </Container>
+    </>
   )
 }
