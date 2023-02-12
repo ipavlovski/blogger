@@ -1,22 +1,20 @@
 import {
-  ActionIcon, Anchor, Button, Container, createStyles,
+  ActionIcon, Anchor, createStyles,
   FileButton,
-  Flex, HoverCard, MultiSelect, Select, Stack, Text, TextInput
+  Flex, HoverCard, MultiSelect, Stack, Text, TextInput
 } from '@mantine/core'
 import { getHotkeyHandler, useDisclosure } from '@mantine/hooks'
 import { IconCodeCircle2, IconEdit } from '@tabler/icons-react'
-import { useContentStore, useCreateNewContent, useCreateTagMutation, useFetchCurrentPost,
-  useTagsQuery, useUpdatePostMutation, useUploadFiles } from 'frontend/api'
+import type { Post } from 'backend/handlers'
+import Monaco from 'components/monaco'
+import Remark from 'components/remark'
+import {
+  useContentStore, useCreateNewContent, useCreateTagMutation, useFetchCurrentPost,
+  useTagsQuery, useUpdatePostMutation, useUploadFiles
+} from 'frontend/api'
 import { lazy, Suspense, useEffect, useState } from 'react'
-import ReactMarkdown from 'react-markdown'
-import { CodeProps } from 'react-markdown/lib/ast-to-react'
 import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript'
-import { okaidia } from 'react-syntax-highlighter/dist/esm/styles/prism'
-import remarkGfm from 'remark-gfm'
-import type { TagOp, Post } from 'backend/handlers'
-import Monaco from 'components/monaco'
-import CustomCodeComponent from 'components/code'
 
 SyntaxHighlighter.registerLanguage('typescript', typescript)
 
@@ -43,21 +41,6 @@ const useStyles = createStyles((theme) => ({
     },
   },
 }))
-
-
-function Remark({ markdown }: { markdown: string }) {
-
-  const md = markdown == '' ? 'Empty element' : markdown
-  return (
-    <ReactMarkdown
-      children={md}
-      remarkPlugins={[remarkGfm]}
-      components={{
-        code: CustomCodeComponent
-      }}
-    />
-  )
-}
 
 
 function CodeRunner({ path: localPath }: {path: string}) {
@@ -318,10 +301,10 @@ export default function Page() {
   return (
     <>
       <PostTitle title={post.title} postId={post.id}/>
+
       <Flex gap={24} mb={48}>
         <PostDate createdAt={post.createdAt} updatedAt={post.updatedAt}/>
         <PostTags tags={post.tags} postId={post.id}/>
-
       </Flex>
 
       {

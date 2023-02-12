@@ -76,6 +76,11 @@ Pick<CodeProps, 'children'> & { lang: string, directives: CodeDirective}) {
     cliHighlighter(children, directives) : colorHighlighter(directives)
   console.log('advanced', directives)
 
+  // note: add extra space to the regex
+  const input = directives.type == 'cli' ?
+    String(children).replace(/\n$/, '').replaceAll(`${directives.regex} `, '') :
+    String(children).replace(/\n$/, '')
+
   return (
     <SyntaxHighlighter
       language={lang}
@@ -85,8 +90,7 @@ Pick<CodeProps, 'children'> & { lang: string, directives: CodeDirective}) {
       wrapLines={true}
       useInlineStyles={true}
       lineProps={lineHighligter}
-      children={String(children).replace(/\n$/, '')
-      }
+      children={input}
     />
   )
 }
