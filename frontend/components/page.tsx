@@ -1,7 +1,7 @@
 import {
-  ActionIcon, Anchor, createStyles,
+  ActionIcon, Anchor, Box, Container, createStyles,
   FileButton,
-  Flex, HoverCard, MultiSelect, Stack, Text, TextInput
+  Flex, Group, HoverCard, MultiSelect, Stack, Text, TextInput
 } from '@mantine/core'
 import { getHotkeyHandler, useDisclosure } from '@mantine/hooks'
 import { IconCodeCircle2, IconEdit } from '@tabler/icons-react'
@@ -13,10 +13,8 @@ import {
   useTagsQuery, useUpdatePostMutation, useUploadFiles
 } from 'frontend/api'
 import { lazy, Suspense, useEffect, useState } from 'react'
-import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
-import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript'
+import { fromMarkdown } from 'mdast-util-from-markdown'
 
-SyntaxHighlighter.registerLanguage('typescript', typescript)
 
 const useStyles = createStyles((theme) => ({
   mainHeadline: {
@@ -293,6 +291,24 @@ function PostDate({ createdAt, updatedAt }: {createdAt: Date, updatedAt: Date}) 
   )
 }
 
+
+function TableOfContents({ contents }: {contents: Post['contents']}) {
+  const fullText = contents.map((v) => v.markdown).join('\n')
+
+  const headings = fromMarkdown(fullText).children
+    .filter((v) => v.type == 'heading' && v.depth <= 3)
+    .map((v) => 'type' in v && v.type == 'heading' && v.children[0]?.type == 'text'
+        && { depth: v.depth, text: v.children[0].value })
+    .filter((v) => v) as { depth: number, text: string}[]
+
+  return (
+    <>
+      {headings.map((v, ind) => <h3 key={ind}>{v.text}</h3>)}
+    </>
+
+  )
+}
+
 export default function Page() {
   const { data: post } = useFetchCurrentPost()
 
@@ -300,23 +316,29 @@ export default function Page() {
 
 
   return (
-    <>
-      <PostTitle title={post.title} postId={post.id}/>
+    <div style={{ display: 'flex' }}>
+      <Box>
 
-      <Flex gap={24} mb={48}>
-        <PostDate createdAt={post.createdAt} updatedAt={post.updatedAt}/>
-        <PostTags tags={post.tags} postId={post.id}/>
-      </Flex>
+        <PostTitle title={post.title} postId={post.id}/>
 
-      {
-        post.contents.length == 0 ?
-          <p>Empty element, started editing</p> :
-          post.contents.map(({ id, markdown: md, files }) =>
-            (<ContentRenderer markdown={md} contentId={id} files={files} key={id}/>))
-      }
+        <Flex gap={24} mb={48}>
+          <PostDate createdAt={post.createdAt} updatedAt={post.updatedAt}/>
+          <PostTags tags={post.tags} postId={post.id}/>
+        </Flex>
 
-      <AddContentButton />
+        {
+          post.contents.length == 0 ?
+            <p>Empty element, started editing</p> :
+            post.contents.map(({ id, markdown: md, files }) =>
+              (<ContentRenderer markdown={md} contentId={id} files={files} key={id}/>))
+        }
 
-    </>
+        <AddContentButton />
+      </Box>
+      <Box>
+        <TableOfContents contents={post.contents}/>
+      </Box>
+
+    </div>
   )
 }

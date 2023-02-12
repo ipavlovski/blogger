@@ -2,10 +2,14 @@ import { Anchor, Blockquote, Modal, Table, Title } from '@mantine/core'
 import { useDisclosure } from '@mantine/hooks'
 import { IconHash } from '@tabler/icons-react'
 import CustomCodeComponent from 'components/code'
-import { useEffect, useRef, useState } from 'react'
+import { useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { HeadingProps } from 'react-markdown/lib/ast-to-react'
+import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
+import typescript from 'react-syntax-highlighter/dist/esm/languages/prism/typescript'
 import remarkGfm from 'remark-gfm'
+
+SyntaxHighlighter.registerLanguage('typescript', typescript)
 
 function Header1Component({ node,children, className }: HeadingProps) {
 
@@ -63,10 +67,8 @@ function ImageComponent(props: JSX.IntrinsicElements['img']) {
         </Modal>
       }
     </>
-
   )
 }
-
 
 function BlockquoteComponent(props: JSX.IntrinsicElements['blockquote']) {
 
@@ -100,7 +102,6 @@ export default function Remark({ markdown }: { markdown: string }) {
         img: ImageComponent,
         blockquote: BlockquoteComponent,
         table: TableComponent
-
       }}
     />
   )
