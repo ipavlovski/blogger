@@ -1,12 +1,13 @@
-import { Title } from '@mantine/core'
+import { Anchor, Blockquote, Modal, Table, Title } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
 import { IconHash } from '@tabler/icons-react'
 import CustomCodeComponent from 'components/code'
+import { useEffect, useRef, useState } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { HeadingProps } from 'react-markdown/lib/ast-to-react'
 import remarkGfm from 'remark-gfm'
 
-
-function header1({ node,children, className }: HeadingProps) {
+function Header1Component({ node,children, className }: HeadingProps) {
 
   return (
     <div style={{ position: 'relative' }}>
@@ -17,7 +18,7 @@ function header1({ node,children, className }: HeadingProps) {
 
 }
 
-function header2({ node,children, className }: HeadingProps) {
+function Header2Component({ node,children, className }: HeadingProps) {
 
   return (
     <div style={{ position: 'relative' }}>
@@ -26,17 +27,60 @@ function header2({ node,children, className }: HeadingProps) {
   )
 
 }
-function header3({ node, children, className }: HeadingProps) {
+
+function Header3Component({ node, children, className }: HeadingProps) {
   return <Title order={3} transform='uppercase' size={18} mt={20} mb={4}
     style={{ fontFamily: 'Inter' }} weight={800}>{children}</Title>
 
 
 }
 
-function headerGeneric({ node,children, className }: HeadingProps) {
+function GenericHeaderComponent({ node,children, className }: HeadingProps) {
   return <Title order={4} size={18} weight={600} style={{ fontFamily: 'Inter' }}>{children}</Title>
 }
 
+function ImageComponent(props: JSX.IntrinsicElements['img']) {
+  const ref = useRef<HTMLImageElement>(null)
+  const [opened, { close, open }] = useDisclosure(false)
+
+
+  // const isMinimized = ref.current && (ref.current?.naturalWidth > ref.current?.width ||
+  //   ref.current?.naturalHeight > ref.current?.height)
+  const handler = () => {
+    open()
+  }
+  return (
+    <>
+      <img ref={ref} src={props.src} alt={props.alt} onClick={handler}
+        style={{ objectFit: 'contain', maxWidth: '100%', height: 'auto',
+          cursor: 'pointer' }} />
+
+      {
+        <Modal opened={opened} onClose={close} size="auto" centered title={props.alt}
+          withCloseButton={false}>
+          <img ref={ref} src={props.src} alt={props.alt} onClick={handler}
+            style={{ objectFit: 'contain', maxWidth: '100%', height: 'auto' }} />
+        </Modal>
+      }
+    </>
+
+  )
+}
+
+
+function BlockquoteComponent(props: JSX.IntrinsicElements['blockquote']) {
+
+  const anchor = <Anchor href="https://mantine.dev/" target="_blank"> - Mantine docs </Anchor>
+  return (
+    <Blockquote color='cactus.0' cite={anchor}>{props.children}</Blockquote>
+  )
+}
+
+function TableComponent(props: JSX.IntrinsicElements['table']) {
+  return (
+    <Table highlightOnHover>{props.children}</Table>
+  )
+}
 
 export default function Remark({ markdown }: { markdown: string }) {
 
@@ -47,12 +91,15 @@ export default function Remark({ markdown }: { markdown: string }) {
       remarkPlugins={[remarkGfm]}
       components={{
         code: CustomCodeComponent,
-        h1: header1,
-        h2: header2,
-        h3: header3,
-        h4: headerGeneric,
-        h5: headerGeneric,
-        h6: headerGeneric,
+        h1: Header1Component,
+        h2: Header2Component,
+        h3: Header3Component,
+        h4: GenericHeaderComponent,
+        h5: GenericHeaderComponent,
+        h6: GenericHeaderComponent,
+        img: ImageComponent,
+        blockquote: BlockquoteComponent,
+        table: TableComponent
 
       }}
     />

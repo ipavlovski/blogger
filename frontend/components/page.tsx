@@ -73,8 +73,9 @@ function ContentRenderer({ markdown, contentId, files }:
   return (
     <div>
       {/* MarkdownContent */}
-      <HoverCard shadow="sm" position='right' openDelay={300}
-      // classNames={{ dropdown: classes.content }}
+      <HoverCard shadow="sm" position='right' openDelay={50} closeDelay={300}
+        zIndex={1}
+        // classNames={{ dropdown: classes.content }}
         styles={{ dropdown: { background: 'none', border: 'none' } }}>
         <HoverCard.Target >
           <div>
@@ -182,7 +183,7 @@ function PostTags({ tags, postId }: {tags: Post['tags'], postId: number }) {
   }
 
   return (
-    <HoverCard disabled={isEditing} shadow="sm" position='right' openDelay={300}
+    <HoverCard disabled={isEditing} shadow="sm" position='right' openDelay={50} closeDelay={300}
       styles={{ dropdown: { background: 'none', border: 'none' } }}>
       <HoverCard.Target>
         {isEditing ?
