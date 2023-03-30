@@ -5,7 +5,6 @@ import { PrismAsyncLight as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { okaidia } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { z } from 'zod'
 
-
 function VanillaCode({ className, children }: Pick<CodeProps, 'className' | 'children'>) {
   return (
     <code className={className}>
@@ -16,15 +15,14 @@ function VanillaCode({ className, children }: Pick<CodeProps, 'className' | 'chi
 
 function BasicCode({ children, lang }: Pick<CodeProps, 'children'> & { lang: string }) {
   return (
-    <>
-      <SyntaxHighlighter
-        language={lang}
-        style={okaidia}
-        showLineNumbers={true}
-        PreTag="div"
-        children={String(children).replace(/\n$/, '')}
-      />
-    </>
+    <SyntaxHighlighter
+      language={lang}
+      style={okaidia}
+      showLineNumbers={true}
+      PreTag="div"
+    >
+      {String(children).replace(/\n$/, '')}
+    </SyntaxHighlighter>
   )
 }
 
@@ -52,7 +50,7 @@ const cliHighlighter = (children: CodeProps['children'],
     output.push({ data: 'cli-output' })
   }
 
-  console.log(output)
+  // console.log(output)
 
   return (lineNum: number): HtmlDataProps<HTMLElement> => {
     return output[lineNum-1]
@@ -74,7 +72,7 @@ Pick<CodeProps, 'children'> & { lang: string, directives: CodeDirective}) {
 
   const lineHighligter = directives.type == 'cli' ?
     cliHighlighter(children, directives) : colorHighlighter(directives)
-  console.log('advanced', directives)
+  // console.log('advanced', directives)
 
   // note: add extra space to the regex
   const input = directives.type == 'cli' ?
@@ -90,8 +88,9 @@ Pick<CodeProps, 'children'> & { lang: string, directives: CodeDirective}) {
       wrapLines={true}
       useInlineStyles={true}
       lineProps={lineHighligter}
-      children={input}
-    />
+    >
+      {input}
+    </SyntaxHighlighter>
   )
 }
 
@@ -156,8 +155,10 @@ export default function CustomCodeComponent({ node, inline, children, className 
   const lang = /language-(\w+)/.exec(className || '')?.[1]
 
   return (
-    !inline && lang && dirs ? <AdvancedCode children={children} lang={lang} directives={dirs} /> :
-      !inline && lang ? <BasicCode children={children} lang={lang}/> :
-        <VanillaCode className={className} children={children} />
+    !inline && lang && dirs ?
+      <AdvancedCode lang={lang} directives={dirs}>{children}</AdvancedCode> :
+      !inline && lang ?
+        <BasicCode lang={lang}>{children}</BasicCode> :
+        <VanillaCode className={className} >{children}</VanillaCode>
   )
 }

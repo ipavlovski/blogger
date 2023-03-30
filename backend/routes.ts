@@ -1,293 +1,74 @@
-import { Router } from 'express'
-import multer from 'multer'
+import { inferAsyncReturnType, initTRPC } from '@trpc/server'
+import * as trpcExpress from '@trpc/server/adapters/express'
 import { z } from 'zod'
+import superjson from 'superjson'
 
 import * as h from 'backend/handlers'
 
-const routes = Router()
-const storage = multer.memoryStorage()
-const upload = multer({ storage: storage, preservePath: true })
+// created for each request, return empty context
+export const createContext = ({ req, res, }: trpcExpress.CreateExpressContextOptions) => ({})
+type Context = inferAsyncReturnType<typeof createContext>;
+const t = initTRPC.context<Context>().create({ transformer: superjson, })
 
-/**
- * Get a list of all the blogposts
- */
+export const appRouter = t.router({
 
-const PostsQueryParams = z.object({
-  tags: z.string().transform((v) => v && decodeURIComponent(v).split(','))
-    .pipe(z.string().array()).optional()
+  createEntry: t.procedure.input(
+    z.object({ blogpostId: z.number(), markdown: z.string().min(3) })
+  ).mutation(async ({ input: { blogpostId, markdown } }) => {
+    return await h.createEntry(blogpostId, markdown)
+  }),
+
+  updateEntry: t.procedure.input(
+    z.object({ entryId: z.number(), markdown: z.string().min(3) })
+  ).mutation(async ({ input: { entryId, markdown } }) => {
+    return await h.updateEntry(entryId, markdown)
+  }),
+
+  createBlogpost: t.procedure.mutation(async () => {
+    return await h.createBlogpost()
+  }),
+
+  updateBlogpost: t.procedure.input(
+    z.object({
+      blogpostId: z.number(),
+      tags: z.string().array().optional(),
+      title: z.string().optional()
+    })
+  ).mutation(async ({ input: { blogpostId, ...params } }) => {
+    return await h.updateBlogpost(blogpostId, params)
+  }),
+
+  captureMedia: t.procedure.input(
+    z.object({ blogpostId: z.number(), src: z.string() })
+  ).mutation(async ({ input: { blogpostId, src } }) => {
+    return await h.captureMedia(blogpostId, src)
+  }),
+
+  getActiveBlogpost: t.procedure.input(
+    z.number()
+  ).query(async ({ input: blogpostId }) => {
+    return await h.getActiveBlogpost(blogpostId)
+  }),
+
+  getFilteredBlogposts: t.procedure.input(
+    z.object({
+      title: z.string().nullable(),
+      category: z.string().nullable(),
+      tags: z.string().array()
+    })
+  ).query(async ({ input }) => {
+    return await h.getFilteredBlogposts(input)
+  }),
+
+  getTags: t.procedure.query(async () => {
+    return await h.getTags()
+  }),
+
+  createTag: t.procedure.input(
+    z.string()
+  ).mutation(async ({ input: name }) => {
+    return await h.createTag(name)
+  }),
+
+
 })
-
-
-routes.get('/posts', async (req, res) => {
-  try {
-    const queryParams = PostsQueryParams.parse(req.query)
-    const posts = queryParams.tags && queryParams.tags.length > 0 ?
-      await h.getFilteredPosts(queryParams.tags) :
-      await h.getAllPosts()
-
-    return res.json(posts)
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-
-/**
- * Batch update of tags on multiple posts.
- * Tags must already exist, or handler will throw an error.
- * Can send add/remove ops simultaneously.
- */
-const PostsPutBody = z.object({
-  posts: z.number().array(),
-  tags: z.object({ add: z.string().array(), remove: z.string().array() })
-})
-
-routes.put('/posts', async (req, res) => {
-  try {
-    const batchUpdateDef = PostsPutBody.parse(req.body)
-    await h.updateTagsOnMultiplePosts(batchUpdateDef)
-
-    return res.sendStatus(200)
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-/**
- * Create a new post
- */
-routes.post('/post', async (req, res) => {
-  try {
-    const postId = await h.createNewPost()
-
-    return res.json({ postId })
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-/**
- * Send the full data for the post
- */
-routes.get('/post/:id', async (req, res) => {
-  try {
-    const postId = parseInt(req.params.id)
-    const post = await h.getPost(postId)
-
-    return res.json(post)
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-/**
- * Update post's metadata: title/tags
- */
-
-const PostsMetadataBody = z.object({
-  title: z.string().min(3).max(80).optional(),
-  tags: z.object({ add: z.string().array(), remove: z.string().array() }).optional()
-})
-
-routes.put('/post/:id', async (req, res) => {
-  try {
-    const postId = parseInt(req.params.id)
-    const metadata = PostsMetadataBody.parse(req.body)
-    await h.updatePostMetadata(postId, metadata)
-
-    return res.sendStatus(200)
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-/**
- * Delete a post (and all associated content entries)
- * Also delete all the files.
- */
-routes.delete('/post/:id', async (req, res) => {
-  try {
-    const postId = parseInt(req.params.id)
-    await h.deletePost(postId)
-
-    return res.sendStatus(200)
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-/**
- * Create new content entry
- */
-
-routes.post('/post/:id/content', async (req, res) => {
-  try {
-    const postId = parseInt(req.params.id)
-    const { id } = await h.createContentEntry(postId)
-
-    return res.json({ contentId: id })
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-
-/**
- * Upload a new file: image, code, pdf
- * - image: get dimensions, verify format
- * - code: one or multiple files, ensure one file, need to check if 'runnnable'
- * - pdf: verify that it is a pdf file
- */
-
-routes.put('/content/:id/image', upload.single('image'), async (req, res) => {
-  try {
-    const contentId = parseInt(req.params.id)
-    if (req.file == null) throw new Error('Attached file is missing')
-
-    const path = await h.uploadImage(contentId, req.file)
-
-    return res.json({ path })
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-
-/**
- * Update content entry or re-index
- * Either provide markdown for updating
- * OR provide index for re-indexing
- */
-const UpdateContentBody = z.object({
-  index: z.number().optional(),
-  markdown: z.string().optional()
-})
-
-routes.put('/content/:id/markdown', async (req, res) => {
-  try {
-    const contentId = parseInt(req.params.id)
-    const { index, markdown } = UpdateContentBody.parse(req.body)
-    if (index == null && markdown == null) throw new Error('No arguments provided')
-    if (index != null) await h.updateContentIndex(contentId, index)
-    if (markdown != null) await h.updateContentMarkdown(contentId, markdown)
-
-    return res.sendStatus(200)
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-
-/**
- * Delete a content entry
- */
-routes.delete('/content/:id', async (req, res) => {
-  try {
-    const contentId = parseInt(req.params.id)
-    await h.deleteContentEntry(contentId)
-
-    return res.sendStatus(200)
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-/**
- * Get a list of all the tags
- * Useful for documentation/autocomplete
- */
-routes.get('/tags', async (req, res) => {
-  try {
-    const tags = await h.getAllTags()
-    return res.json(tags)
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-/**
- * Create a new tag
- */
-const NewTagBody = z.object({
-  name: z.string().min(2)
-})
-
-routes.post('/tag', async (req, res) => {
-  try {
-    const { name } = NewTagBody.parse(req.body)
-    await h.createNewTag(name)
-    return res.sendStatus(200)
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-/**
- * Update an existing tag name
- */
-
-const UpdateTagBody = z.object({
-  oldName: z.string(),
-  newName: z.string().min(2)
-})
-
-routes.put('/tag', async (req, res) => {
-  try {
-    const body = UpdateTagBody.parse(req.body)
-    await h.updateTagName(body)
-
-    return res.sendStatus(200)
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-/**
- * Delete a tag
- */
-
-const DeleteTagBody = z.object({
-  name: z.string(),
-})
-
-routes.delete('/tag', async (req, res) => {
-  try {
-    const { name } = DeleteTagBody.parse(req.body)
-    await h.deleteTag(name)
-
-    return res.sendStatus(200)
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-routes.post('/upload/:id/files', upload.array('files'), async (req, res) => {
-  try {
-    const postId = parseInt(req.params.id)
-    if (! req.files || req.files.length == 0 || ! (req.files instanceof Array) )
-      throw new Error('No files attached')
-
-    await h.uploadFiles(postId, req.files)
-
-    return res.json({ ok: 1 })
-  } catch (err) {
-    console.error(err)
-    return res.status(400).json({ error: err instanceof Error ? err.message : 'unknown error' })
-  }
-})
-
-export default routes

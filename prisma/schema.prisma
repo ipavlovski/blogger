@@ -7,39 +7,38 @@ datasource db {
     url      = "file:./dev.db"
 }
 
-model Post {
+model Blogpost {
     id    Int    @id @default(autoincrement())
-    url   String
     title String
 
-    contents Content[]
-    tags     Tag[]
+    createdAt DateTime @default(now())
+    updatedAt DateTime @default(now())
 
+    entries    Entry[]
+    tags       Tag[]
+    category   Category? @relation(fields: [categoryId], references: [id])
+    categoryId Int?
+}
+
+model Entry {
+    id         Int      @id @default(autoincrement())
+    markdown   String
+    blogpost   Blogpost @relation(fields: [blogpostId], references: [id])
+    blogpostId Int
+
+    index     Int      @default(0)
     createdAt DateTime @default(now())
     updatedAt DateTime @default(now())
 }
 
-model Content {
-    id       Int    @id @default(autoincrement())
-    postId   Int
-    post     Post   @relation(fields: [postId], references: [id])
-    markdown String
-    index    Int
-    files    File[]
-
-    @@unique([id, index], name: "unique_index_per_post")
-}
-
 model Tag {
-    id   Int    @id @default(autoincrement())
-    name String @unique
-    post Post[]
+    id        Int        @id @default(autoincrement())
+    name      String     @unique
+    blogposts Blogpost[]
 }
 
-model File {
-    id        Int     @id @default(autoincrement())
-    path      String  @unique
-    metadata  String  @default("{}")
-    content   Content @relation(fields: [contentId], references: [id])
-    contentId Int
+model Category {
+    id        Int        @id @default(autoincrement())
+    name      String     @unique
+    blogposts Blogpost[]
 }

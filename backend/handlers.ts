@@ -1,173 +1,113 @@
-import { PrismaClient } from '@prisma/client'
-import { randomUUID as uuidv4 } from 'node:crypto'
-import { writeFile, mkdir } from 'node:fs/promises'
+import { PrismaClient, Category } from '@prisma/client'
+import { exec } from 'node:child_process'
+import { rename, rm, writeFile, mkdir } from 'node:fs/promises'
+import { promisify } from 'node:util'
+
 import { STORAGE_DIRECTORY } from 'backend/config'
-import sharp from 'sharp'
 
-export type TagOp = { add: string[], remove: string[]}
-
+const execute = promisify(exec)
 const prisma = new PrismaClient()
 
-const updatePostTags = async (postId: number, tags: TagOp) => {
-  tags.add.length > 0 && await prisma.post.update({
-    where: { id: postId }, data: { tags: { connect: tags.add.map((tag) => ({ name: tag })) } }
-  })
-  tags.remove.length > 0 && await prisma.post.update({
-    where: { id: postId }, data: { tags: { disconnect: tags.remove.map((tag) => ({ name: tag })) } }
-  })
+
+export async function createEntry( blogpostId: number, markdown: string) {
+  await prisma.blogpost.update({ where: { id: blogpostId }, data: { updatedAt: new Date() } })
+  return prisma.entry.create({ data: { blogpostId, markdown } })
 }
 
 
-export type Posts = Awaited<ReturnType<typeof getAllPosts>>
-export async function getAllPosts() {
-  return await prisma.post.findMany({
-    include: { tags: true }
-  })
+export async function updateEntry(entryId: number, markdown: string) {
+  const updatedAt = new Date()
+  return prisma.entry.update({ where: { id: entryId }, data: {
+    markdown,
+    updatedAt,
+    blogpost: { update: { updatedAt } }
+  } })
 }
 
-export async function getFilteredPosts(tags: string[]) {
-  return await prisma.post.findMany({
-    where: { tags: { some: { name: { in: tags } } } },
-    include: { tags: true }
-  })
-}
 
-export async function updateTagsOnMultiplePosts({ posts, tags }: { posts: number[], tags: TagOp }) {
-  for (const postId of posts) await updatePostTags(postId, tags)
-}
+export async function captureMedia(blogpostId: number, src: string) {
+  const basename = `${Date.now()}`
+  let filename: string | null = null
+  const dir = `${STORAGE_DIRECTORY}/${blogpostId}`
+  await mkdir(dir, { recursive: true })
 
-export async function createNewPost() {
+  try {
+    const base64 = src.replace(/^data:(.*,)?/, '')
+    const buffer = Buffer.from(base64, 'base64')
+    await writeFile(`${dir}/${basename}.unknown`, buffer)
 
-  const { id } = await prisma.post.create({
-    data: {
-      title: 'Untitled',
-      url: 'untitled'
+    const { stdout } = await execute(`file -Lib ${dir}/${basename}.unknown`)
+    const [mime] = stdout.split(';', 1)
+    console.log(stdout)
+
+    switch (mime) {
+      case 'image/png':
+        filename = `${basename}.png`
+        break
+      case 'image/jpeg':
+        filename = `${basename}.jpeg`
+        break
+      case 'video/mp4':
+        filename = `${basename}.mp4`
+        break
+      default:
+        console.log('No handler available')
+        break
     }
-  })
+    if (! filename) throw new Error('Failed to get matchign mimes.')
+    rename(`${dir}/${basename}.unknown`, `${dir}/${filename}`)
 
-  return id
-}
+    if (filename.endsWith('.mp4'))
+      await execute(`ffmpeg -i ${dir}/${filename} ${dir}/${filename.replace('.mp4', '.gif')}`)
 
-export type Post = Awaited<ReturnType<typeof getPost>>
-export async function getPost(postId: number) {
-  return await prisma.post.findFirstOrThrow({
-    where: { id: postId },
-    include: { contents: { include: { files: true } }, tags: true }
-  })
-}
-
-export async function updatePostMetadata(postId: number, data: { title?: string, tags?: TagOp}) {
-  const { title, tags } = data
-
-  if (title != null) {
-    const url = title.trim().replace(/\s+/gi, '-').toLowerCase().replace(/[^0-9a-z_-]/gi, '')
-    await prisma.post.update({ where: { id: postId }, data: { title, url } })
+  } catch {
+    console.log('Error during file-type identification')
+    await rm(`${dir}/${basename}.unknown`, { force: true })
   }
 
-  if (tags != null) {
-    await updatePostTags(postId, tags)
-  }
-}
+  return filename
 
-export async function deletePost(postId: number) {
-  await prisma.post.delete({ where: { id: postId } })
-  // TODO: delete the associated files, move them if necessary
 }
 
 
-export async function createContentEntry(postId: number) {
-  const { index } = await prisma.content.findFirst({ orderBy: { index: 'desc' } }) || { index: 1 }
-  return await prisma.content.create({ data: { index, markdown: '', postId } })
+export async function createBlogpost() {
+  return prisma.blogpost.create({ data: { title: 'Untitled' } })
 }
 
 
-export async function updateContentIndex(contentId: number, index: number) {
-  const { postId } = await prisma.content.findFirstOrThrow({ where: { id: contentId } })
+export async function getFilteredBlogposts({ title, category, tags }:
+{title: string | null, category: string | null, tags: string[]}) {
 
-  // get all the current contents of the post, need only id + index for the function
-  const postContents = await prisma.content.findMany({
-    where: { postId }, select: { id: true, index: true }
+  // FILTER PROPERLY! (with custom null-values, etc.)
+  // ADD PROPER SORTING
+  return prisma.blogpost.findMany({
+    orderBy: { createdAt: 'desc' }
   })
+}
 
-  // filter and sort in reverse, since inds in DB have to be unique
-  const sortedContents = postContents.filter(({ index: ind }) => ind >= index)
-    .sort((a, b) => b.index - a.index)
 
-  // run the query
-  for (const content of sortedContents) await prisma.content.update({
-    where: { id: content.id }, data: { index: content.index + 1 }
+export async function getTags() {
+  return prisma.tag.findMany()
+}
+
+
+export async function getActiveBlogpost(blogpostId: number) {
+  return prisma.blogpost.findFirstOrThrow({
+    where: { id: blogpostId },
+    include: { category: true, entries: true, tags: true }
   })
-
-  await prisma.content.update({ where: { id: contentId }, data: { index } })
 }
 
-export async function updateContentMarkdown(contentId: number, markdown: string) {
-  // TODO: check contexts for any file-refs
-  await prisma.content.update({ where: { id: contentId }, data: { markdown } })
+
+export async function updateBlogpost(blogpostId: number, opts: { title?: string, tags?: string[]}) {
+  const { title, tags } = opts
+  return prisma.blogpost.update({ where: { id: blogpostId }, data: {
+    title,
+    tags: { set: tags?.map((tag) => ({ name: tag })) }
+  } })
 }
 
-export async function deleteContentEntry(contentId: number) {
-  // TODO: check contexts for any file-refs
-  await prisma.content.delete({ where: { id: contentId } })
-}
-export async function getAllTags() {
-  return await prisma.tag.findMany({ select: { name: true } })
-}
 
-export async function createNewTag(name: string) {
-  await prisma.tag.create({ data: { name } })
-}
-
-export async function updateTagName({ newName, oldName }: { oldName: string; newName: string }) {
-  await prisma.tag.update({ where: { name: oldName }, data: { name: newName } })
-}
-
-export async function deleteTag(name: string) {
-  await prisma.tag.delete({ where: { name } })
-}
-
-export async function uploadImage(contentId: number, file: Express.Multer.File) {
-  // const path = `${postId}/${uuidv4()}`
-  const { postId } = await prisma.content.findFirstOrThrow({ where: { id: contentId } })
-
-  await mkdir(`${STORAGE_DIRECTORY}/${postId}`, { recursive: true })
-  const now = new Date().toISOString().replace(/[-:Z]/g, '').replace(/[T.]/g, '-')
-  const path = `${postId}/${now}.png`
-  await writeFile(`${STORAGE_DIRECTORY}/${path}`, file.buffer)
-
-  const image = sharp(file.buffer)
-  const metadata = await image.metadata()
-  if (metadata.width == null || metadata.height == null) throw new Error('Issue getting dimensions')
-
-  await prisma.file.create({
-    data: {
-      path: path,
-      metadata: JSON.stringify({ width: metadata.width!, height: metadata.height! }),
-      contentId
-    },
-  })
-
-  return path
-
-}
-
-export async function uploadFiles(postId: number, files: Express.Multer.File[]) {
-
-  await mkdir(`${STORAGE_DIRECTORY}/${postId}`, { recursive: true })
-
-  const paths = <string[]>[]
-  for (const file of files) {
-    const path = `${postId}/${file.originalname}`
-    await writeFile(`${STORAGE_DIRECTORY}/${path}`, file.buffer)
-    paths.push(path)
-  }
-
-  await writeFile(`${__dirname}/../trigger.txt`, `${Math.random()}`, { encoding: 'utf-8' })
-  const markdown = ['UPLOADED CODE:\n', ...paths].join('\n')
-  const { index } = await prisma.content.findFirst({ orderBy: { index: 'desc' } }) || { index: 1 }
-
-  return await prisma.content.create({ data:
-    { index, markdown, postId, files: { create: paths.map((path) => ({ path })) } }
-  })
-
+export async function createTag(name: string) {
+  return prisma.tag.create({ data: { name } })
 }

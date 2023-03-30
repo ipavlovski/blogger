@@ -1,108 +1,55 @@
-import { Container, MantineProvider, MantineThemeOverride } from '@mantine/core'
-import { NotificationsProvider } from '@mantine/notifications'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Container, MantineProvider } from '@mantine/core'
+import { Notifications } from '@mantine/notifications'
+import { QueryClientProvider } from '@tanstack/react-query'
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { createBrowserRouter, Outlet, RouterProvider } from 'react-router-dom'
+
+import { queryClient, trpc, trpcClient } from 'frontend/apis/queries'
+import { globalTheme } from 'frontend/apis/styles'
+import Blogpost from 'components/blog-post'
+import Blogposts from 'components/blog-list'
 import Header from 'components/header'
-import Page from 'components/page'
-import Posts from 'components/posts'
-
-export const SERVER_URL = `https://localhost:${import.meta.env.VITE_SERVER_PORT}`
-export const ORIGIN_URL = `https://localhost:${import.meta.env.VITE_PORT}`
-
-const globalTheme: MantineThemeOverride = {
-  fontFamily: 'Hack',
-  colorScheme: 'dark',
-  colors: {
-    'ocean-blue': ['#7AD1DD', '#5FCCDB', '#44CADC', '#2AC9DE', '#1AC2D9',
-      '#11B7CD', '#09ADC3', '#0E99AC', '#128797', '#147885'],
-    'cactus': ['#2BBC8A', '#405d53']
-  },
-  globalStyles: (theme) => ({
-    '[data="cli-prompt"] > .linenumber': {
-      display: 'none !important'
-    },
-    '[data="cli-output"] > .linenumber': {
-      display: 'none !important'
-    },
-    '[data="hl-red"]': {
-      backgroundColor: '#b0151528',
-      display: 'block'
-    },
-    '[data="hl-green"]': {
-      backgroundColor: '#0ddc4118',
-      display: 'block'
-    },
-
-    '[data="cli-prompt"]': {
-      borderLeft: '2px solid hsl(220, 3%, 60%)',
-      padding: '2px 12px',
-      marginLeft: 160,
-      position: 'relative',
-      '&::before': {
-        position: 'absolute',
-        content: 'attr(data-side-content)',
-        opacity: 0.7,
-        left: -172,
-        width: 160,
-        textAlign: 'right',
-      }
-    },
-    '[data="cli-output"]': {
-      borderLeft: '2px solid hsl(220, 3%, 60%)',
-      padding: '2px 12px',
-      marginLeft: 160,
-      color: '#f2eaeac9',
-      '& > *': {
-        opacity: 0.9
-      },
-    },
-  })
-}
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-    },
-  },
-})
-
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <Root />,
-    children: [
-      {
-        path: 'posts/:postId',
-        element: <Page />,
-      },
-      {
-        index: true,
-        element: <Posts />,
-      },
-    ],
-  },
-])
 
 
 function Root() {
   return (
-    <Container size='md' pt={30} sizes={{ xs: 540, sm: 720, md: 800, lg: 1140, xl: 2000 }}>
-      <Header />
+    <>
+      <Container pt={16} size={'sm'}>
+        <Header />
+      </Container>
       <Outlet />
-    </Container>
+    </>
+
   )
 }
 
 
+const router = createBrowserRouter([{
+  path: '/',
+  element: <Root />,
+  children: [
+    {
+      path: 'posts/:postId',
+      element: <Blogpost />,
+    },
+    {
+      index: true,
+      element: <Blogposts />,
+    },
+  ],
+}])
+
+
 export default function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <MantineProvider withGlobalStyles withNormalizeCSS theme={globalTheme}>
-        <NotificationsProvider position="top-right" autoClose={1600}>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <MantineProvider withGlobalStyles withNormalizeCSS theme={globalTheme}>
+          <Notifications />
           <RouterProvider router={router}/>
-        </NotificationsProvider>
-      </MantineProvider>
-    </QueryClientProvider>
+        </MantineProvider>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </trpc.Provider>
   )
 }

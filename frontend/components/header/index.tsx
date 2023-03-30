@@ -13,15 +13,16 @@ const useStyles = createStyles(() => ({
 
 
 export default function Header() {
-  const { classes } = useStyles()
+  const { classes: { mainHeadline } } = useStyles()
 
-  return <>
+  return (
     <Link to={'/'} style={{ textDecoration: 'none' }}>
       <div style={{ display: 'flex', alignItems: 'flex-start' }}>
         <IconCactus size={48} stroke={1.5} color='#2BBC8A'/>
-        <Text className={classes.mainHeadline}>IPs blog</Text>
+        <Text className={mainHeadline}>IPs blog</Text>
       </div>
     </Link>
-  </>
+  )
+
 
 }

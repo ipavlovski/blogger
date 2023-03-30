@@ -1,16 +1,19 @@
 import cors from 'cors'
-import express, { json } from 'express'
+import express, { json, urlencoded } from 'express'
 import { readFileSync } from 'fs'
 import { createServer as createSecureServer, ServerOptions } from 'https'
 import morgan from 'morgan'
-import routes from 'backend/routes'
+import * as trpcExpress from '@trpc/server/adapters/express'
+
+import { appRouter, createContext } from 'backend/routes'
 import { STORAGE_DIRECTORY } from 'backend/config'
 
 // main server object
 const app = express()
 
 // middlware
-app.use(json())
+app.use(json({ limit: '50mb' }))
+app.use(urlencoded({ limit: '50mb', extended: true }))
 app.use(cors())
 
 // logging stuff
@@ -21,7 +24,8 @@ app.use(morgan(':method :url :response-time'))
 app.use(express.static(STORAGE_DIRECTORY))
 
 // use the routes
-app.use(routes)
+app.use( '/trpc', trpcExpress.createExpressMiddleware({ router: appRouter, createContext, }), )
+// app.use(routes)
 
 // create HTTPS server
 const credentials: ServerOptions = {
