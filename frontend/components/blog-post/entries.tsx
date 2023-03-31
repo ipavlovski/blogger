@@ -3,6 +3,8 @@ import { Entry } from '@prisma/client'
 import { IconPencil } from '@tabler/icons-react'
 
 import Remark from 'components/remark'
+import { useEditorValue } from 'frontend/apis/queries'
+import { useUiStore } from 'frontend/apis/stores'
 
 
 const useStyles = createStyles((theme) => ({
@@ -57,11 +59,22 @@ function EntryRender({ entry }: { entry: Entry }) {
 
 }
 
+function PreviewRender() {
+  const { markdown } = useEditorValue()
+
+  return (
+    <Remark markdown={markdown}/>
+  )
+}
 
 export default function Entries({ entries }: {entries: Entry[]}) {
+  const showPreview = useUiStore((store) => store.showPreview)
+
   return (
     <>
-      {entries.map((entry) => (<EntryRender key={entry.id} entry={entry}/>))}
+      {showPreview ?
+        <PreviewRender /> :
+        entries.map((entry) => (<EntryRender key={entry.id} entry={entry}/>))}
     </>
   )
 }

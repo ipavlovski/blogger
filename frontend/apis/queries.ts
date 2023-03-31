@@ -7,6 +7,7 @@ import type { AppRouter } from 'frontend/../trpc'
 import { SERVER_URL } from 'frontend/apis/utils'
 import { useFilterStore } from 'frontend/apis/stores'
 import { useParams } from 'react-router-dom'
+import { useLocalStorage } from '@mantine/hooks'
 
 
 ////////////// TRPC / RQ
@@ -65,6 +66,24 @@ export const useGetTags = () => {
   const { data: tags = [] } = trpc.getTags.useQuery()
   return tags
 }
+
+
+type EditorValue = {entryId: number | null, markdown: string}
+
+export const useEditorValue = () => {
+  const blogpost = useActiveBlogpost()
+  const blogpostId = blogpost ? blogpost.id : 0
+
+  const [{ entryId, markdown }, setEntry, clearEntry] = useLocalStorage<EditorValue>({
+    key: `cached-${blogpostId}`,
+    defaultValue: { entryId: null, markdown: '' },
+    serialize: ({ entryId, markdown }) => JSON.stringify({ entryId, markdown }),
+    deserialize: (localStorageValue) => JSON.parse(localStorageValue)
+  })
+
+  return { entryId, markdown, setEntry, clearEntry, blogpostId }
+}
+
 
 ////////////// CACHE
 

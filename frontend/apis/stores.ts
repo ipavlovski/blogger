@@ -21,3 +21,23 @@ export const useFilterStore = create<FilterStore>((set) => ({
     setCategory: (category) => set(() => ({ category })),
   }
 }))
+
+
+interface UiStore {
+  showPreview: boolean
+  showEditor: boolean
+  actions: {
+    togglePreview: () => void
+    toggleEditor: () => void
+  }
+}
+
+export const useUiStore = create<UiStore>((set) => ({
+  showPreview: false,
+  showEditor: false,
+  actions: {
+    togglePreview: () => set((state) => ({ showPreview: ! state.showPreview })),
+    toggleEditor: () => set((state) => ({ showEditor: ! state.showEditor }))
+  }
+}))
+

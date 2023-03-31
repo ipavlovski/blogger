@@ -8,14 +8,15 @@ import { debounce } from 'rxjs/operators'
 import ClipboardHandler from 'frontend/apis/clipboard'
 import { SERVER_URL } from 'frontend/apis/utils'
 import {
-  useBlogpostContext, useCaptureMedia, useCreateEntry, useUpdateEntry
+  useBlogpostContext, useCaptureMedia, useCreateEntry, useEditorValue, useUpdateEntry
 } from 'frontend/apis/queries'
+
 import { useLocalStorage } from '@mantine/hooks'
 
-type EntryValue = {entryId: number | null, markdown: string}
 
-export default function MonacoEditor({ height, blogpostId }:
-{height: number | string, blogpostId: number}) {
+export default function MonacoEditor({ height }: {height: number | string}) {
+
+  const { entryId, markdown, blogpostId, setEntry, clearEntry } = useEditorValue()
 
   const editorRef = useRef<null | editor.IStandaloneCodeEditor>(null)
   const createEntry = useCreateEntry()
@@ -23,12 +24,6 @@ export default function MonacoEditor({ height, blogpostId }:
   const captureMedia = useCaptureMedia()
   const blogpostContext = useBlogpostContext()
 
-  const [{ entryId, markdown }, setEntry, clearEntry] = useLocalStorage<EntryValue>({
-    key: `cached-${blogpostId}`,
-    defaultValue: { entryId: null, markdown: '' },
-    serialize: ({ entryId, markdown }) => JSON.stringify({ entryId, markdown }),
-    deserialize: (localStorageValue) => JSON.parse(localStorageValue)
-  })
 
   const handleMonacoPaste = async (e: globalThis.ClipboardEvent) => {
 
