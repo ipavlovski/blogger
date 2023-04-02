@@ -6,7 +6,8 @@ import { IconAsteriskSimple } from '@tabler/icons-react'
 const useStyles = createStyles((theme) => ({
   dropdown: {
     background: 'none',
-    border: 'none'
+    border: 'none',
+    padding: 0
   }
 }))
 
@@ -33,7 +34,7 @@ export default function HoverEdit({ children, disclosure, style }: {
 
   return (
     <HoverCard disabled={isEditing} classNames={{ dropdown }}
-      shadow="sm" position='left' offset={-20} openDelay={100}>
+      shadow="sm" position='left' offset={-7} openDelay={100} >
 
       <HoverCard.Target>
         <Box style={style}>
