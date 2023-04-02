@@ -74,9 +74,11 @@ export const useCategories = () => {
   return [categories, createCategory] as const
 }
 
-// export const useCreateCategory = () =>
-// export const useGetCategories = () => {
-// }
+export const useCreateCategory = () => trpc.createCategory.useMutation()
+export const useGetCategories = () => {
+  const { data: categories = [] } = trpc.getCategories.useQuery()
+  return categories
+}
 
 
 type EditorValue = {entryId: number | null, markdown: string}

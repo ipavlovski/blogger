@@ -1,9 +1,9 @@
-import { ActionIcon, Anchor, Box, Flex, HoverCard, Select, createStyles } from '@mantine/core'
-import { getHotkeyHandler, useDisclosure } from '@mantine/hooks'
+import { Anchor, Flex, Select, createStyles } from '@mantine/core'
+import { getHotkeyHandler } from '@mantine/hooks'
 import { Category } from '@prisma/client'
-import { IconAsterisk, IconEdit } from '@tabler/icons-react'
 import { useState } from 'react'
 
+import HoverEdit, { useHoverDisclosure } from './hover'
 import { useCategories, useTrpcContext, useUpdateBlogpost } from 'frontend/apis/queries'
 
 
@@ -22,21 +22,7 @@ const useStyles = createStyles((theme) => ({
     flexGrow: 1
 
   },
-  dropdown: {
-    background: 'none',
-    border: 'none'
-  }
 }))
-
-
-function EditButton({ startEdit }: {startEdit: () => void}) {
-  return (
-    <ActionIcon onClick={startEdit}
-      size={32} radius="xl" variant="transparent" color='cactus.1'>
-      <IconAsterisk size={26} stroke={1.5}/>
-    </ActionIcon>
-  )
-}
 
 
 function CategorySelector({ stopEdit, blogpostId, category: blogpostCategory }:
@@ -45,8 +31,11 @@ function CategorySelector({ stopEdit, blogpostId, category: blogpostCategory }:
   const { classes: { multiselect, input, root } } = useStyles()
   const [category, setCategory] = useState(blogpostCategory?.name || null)
   const [allCategories, createCategory] = useCategories()
+
   const updateBlogpost = useUpdateBlogpost()
   const trpcContext = useTrpcContext()
+
+  console.log(`all categories: ${allCategories.map((v) => v.name)}`)
 
   const handleSubmit = async () => {
     stopEdit()
@@ -62,13 +51,13 @@ function CategorySelector({ stopEdit, blogpostId, category: blogpostCategory }:
 
   return (
     <Select
-      data={allCategories.map(({ name }) => ({ value: name }))}
-      placeholder="Select tags"
+      data={allCategories?.map(({ name }) => ({ value: name, label: `${name}` })) || []}
+      placeholder="Choose category..."
       width={800} maxDropdownHeight={400}
       transitionProps={{ transition: 'pop-top-left', duration: 150, timingFunction: 'ease' }}
       className={multiselect}
       classNames={{ input, root }}
-      value={category} onChange={setCategory}
+      value={category ?? ''} onChange={setCategory}
       searchable creatable autoFocus
       getCreateLabel={(query) => `+ Create category %${query}`}
       onCreate={handleCreate}
@@ -92,27 +81,18 @@ function CategoryView({ category }: {category: Category | null}) {
 export default function CategoryList({ category, blogpostId }:
 { category: Category | null, blogpostId: number }) {
 
-  const [isEditing, { open: startEdit, close: stopEdit }] = useDisclosure(false)
-  const { classes: { dropdown } } = useStyles()
+  const disclosure= useHoverDisclosure()
+  const [isEditing, { close: stopEdit }] = disclosure
 
   return (
-    <HoverCard disabled={isEditing} classNames={{ dropdown }}
-      shadow="sm" position='left' offset={-20} openDelay={100}>
-
-      <HoverCard.Target>
-        <Box>
-          {isEditing ?
-            <CategorySelector stopEdit={stopEdit} blogpostId={blogpostId} category={category}/> :
-            <CategoryView category={category}/>}
-        </Box>
-      </HoverCard.Target>
-
-      <HoverCard.Dropdown>
-        <Box>
-          <EditButton startEdit={startEdit}/>
-        </Box>
-      </HoverCard.Dropdown>
-
-    </HoverCard>
+    <HoverEdit disclosure={disclosure}>
+      <>
+        {! isEditing ?
+          <CategoryView category={category}/> :
+          <CategorySelector stopEdit={stopEdit} blogpostId={blogpostId} category={category}/>
+        }
+      </>
+    </HoverEdit>
   )
+
 }

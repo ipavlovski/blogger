@@ -13,7 +13,7 @@ export default function Metadata({ blogpost }: {blogpost: BlogpostWithEntries}) 
     <Stack ml={72} mt={20} spacing={0}>
       <BlogpostTitle title={title} blogpostId={id}/>
 
-      <Flex gap={24} >
+      <Flex gap={24} align={'center'}>
         <CategoryList category={category} blogpostId={id}/>
         <TagList tags={tags} blogpostId={id}/>
         <PostDate createdAt={createdAt} updatedAt={updatedAt}/>
