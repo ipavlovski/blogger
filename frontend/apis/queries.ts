@@ -31,6 +31,7 @@ export const queryClient = new QueryClient({
   },
 })
 
+export const useTrpcContext = () => trpc.useContext()
 
 ////////////// MUTATIONS
 
@@ -39,7 +40,6 @@ export const useUpdateEntry = () => trpc.updateEntry.useMutation()
 export const useCaptureMedia = () => trpc.captureMedia.useMutation()
 export const useCreateBlogpost = () => trpc.createBlogpost.useMutation()
 export const useUpdateBlogpost = () => trpc.updateBlogpost.useMutation()
-export const useCreateTag = () => trpc.createTag.useMutation()
 
 ////////////// QUERIES
 
@@ -62,11 +62,6 @@ export const useFilteredBlogposts = () => {
   return blogposts
 }
 
-export const useGetTags = () => {
-  const { data: tags = [] } = trpc.getTags.useQuery()
-  return tags
-}
-
 export const useCategories = () => {
   const createCategory = trpc.createCategory.useMutation()
   const { data: categories = [] } = trpc.getCategories.useQuery()
@@ -74,12 +69,12 @@ export const useCategories = () => {
   return [categories, createCategory] as const
 }
 
-export const useCreateCategory = () => trpc.createCategory.useMutation()
-export const useGetCategories = () => {
-  const { data: categories = [] } = trpc.getCategories.useQuery()
-  return categories
-}
+export const useTags = () => {
+  const createTag = trpc.createTag.useMutation()
+  const { data: tags = [] } = trpc.getTags.useQuery()
 
+  return [tags, createTag] as const
+}
 
 type EditorValue = {entryId: number | null, markdown: string}
 
@@ -96,10 +91,3 @@ export const useEditorValue = () => {
 
   return { entryId, markdown, setEntry, clearEntry, blogpostId }
 }
-
-
-////////////// CACHE
-
-export const useTrpcContext = () => trpc.useContext()
-// export const useBlogpostContext = () => trpc.useContext().getActiveBlogpost
-// export const useTagsContext = () => trpc.useContext().getTags

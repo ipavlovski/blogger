@@ -22,8 +22,11 @@ export const useHoverDisclosure = () => {
   return useDisclosure(false)
 }
 
-export default function HoverEdit({ children, disclosure }:
-{ children: JSX.Element, disclosure: ReturnType<typeof useHoverDisclosure>}) {
+export default function HoverEdit({ children, disclosure, style }: {
+  children: JSX.Element,
+  disclosure: ReturnType<typeof useHoverDisclosure>,
+  style?: React.CSSProperties
+}) {
   const { classes: { dropdown } } = useStyles()
 
   const [isEditing, { open: startEdit }] = disclosure
@@ -33,7 +36,7 @@ export default function HoverEdit({ children, disclosure }:
       shadow="sm" position='left' offset={-20} openDelay={100}>
 
       <HoverCard.Target>
-        <Box>
+        <Box style={style}>
           {children}
         </Box>
       </HoverCard.Target>

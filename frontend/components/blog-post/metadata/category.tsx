@@ -86,12 +86,9 @@ export default function CategoryList({ category, blogpostId }:
 
   return (
     <HoverEdit disclosure={disclosure}>
-      <>
-        {! isEditing ?
-          <CategoryView category={category}/> :
-          <CategorySelector stopEdit={stopEdit} blogpostId={blogpostId} category={category}/>
-        }
-      </>
+      {! isEditing ?
+        <CategoryView category={category}/> :
+        <CategorySelector stopEdit={stopEdit} blogpostId={blogpostId} category={category}/>}
     </HoverEdit>
   )
 

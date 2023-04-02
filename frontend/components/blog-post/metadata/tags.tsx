@@ -1,10 +1,10 @@
-import { ActionIcon, Anchor, Box, Flex, HoverCard, MultiSelect, createStyles } from '@mantine/core'
-import { getHotkeyHandler, useDisclosure } from '@mantine/hooks'
-import { IconEdit } from '@tabler/icons-react'
-import { useState } from 'react'
+import { Anchor, Flex, MultiSelect, createStyles } from '@mantine/core'
+import { getHotkeyHandler } from '@mantine/hooks'
 import { Tag } from '@prisma/client'
+import { useState } from 'react'
 
-import { useTrpcContext, useCreateTag, useGetTags, useUpdateBlogpost } from 'frontend/apis/queries'
+import HoverEdit, { useHoverDisclosure } from 'components/blog-post/metadata/hover'
+import { useTags, useTrpcContext, useUpdateBlogpost } from 'frontend/apis/queries'
 
 
 const useStyles = createStyles((theme) => ({
@@ -22,21 +22,7 @@ const useStyles = createStyles((theme) => ({
     flexGrow: 1
 
   },
-  dropdown: {
-    background: 'none',
-    border: 'none',
-  }
 }))
-
-
-function EditButton({ startEdit }: {startEdit: () => void}) {
-  return (
-    <ActionIcon onClick={startEdit}
-      size={32} radius="xl" variant="transparent" color='cactus.1'>
-      <IconEdit size={26} stroke={1.5}/>
-    </ActionIcon>
-  )
-}
 
 
 function TagSelector({ stopEdit, blogpostId, tags: blogpostTags }:
@@ -44,12 +30,11 @@ function TagSelector({ stopEdit, blogpostId, tags: blogpostTags }:
 
   const { classes: { multiselect, input, root } } = useStyles()
   const [tags, setTags] = useState(blogpostTags.map((v) => v.name))
-  const allTags = useGetTags()
+  // const allTags = useGetTags()
+  // const createTag = useCreateTag()
+  const [allTags, createTag] = useTags()
   const updateBlogpost = useUpdateBlogpost()
-  const createTag = useCreateTag()
   const trpcContext = useTrpcContext()
-  // const blogpostContext = useBlogpostContext()
-  // const tagsContext = useTagsContext()
 
   const handleSubmit = async () => {
     stopEdit()
@@ -94,26 +79,15 @@ function TagView({ tags }: {tags: Tag[]}) {
 
 
 export default function TagList({ tags, blogpostId }: {tags: Tag[], blogpostId: number }) {
-  const [isEditing, { open: startEdit, close: stopEdit }] = useDisclosure(false)
-  const { classes: { dropdown } } = useStyles()
+  const disclosure= useHoverDisclosure()
+  const [isEditing, { close: stopEdit }] = disclosure
 
   return (
-    <HoverCard
-      classNames={{ dropdown }}
-      disabled={isEditing} shadow="sm" position='left' offset={-20} openDelay={100}
-    >
-      <HoverCard.Target>
-        <Box style={{flex: '1 1 auto'}}>
-          {isEditing ?
-            <TagSelector stopEdit={stopEdit} blogpostId={blogpostId} tags={tags}/> :
-            <TagView tags={tags}/>}
-        </Box>
-      </HoverCard.Target>
-      <HoverCard.Dropdown>
-        <Box>
-          <EditButton startEdit={startEdit}/>
-        </Box>
-      </HoverCard.Dropdown>
-    </HoverCard>
+    <HoverEdit disclosure={disclosure} style={{ flex: '1 1 auto' }}>
+      {! isEditing ?
+        <TagView tags={tags}/> :
+        <TagSelector stopEdit={stopEdit} blogpostId={blogpostId} tags={tags}/>}
+    </HoverEdit>
   )
+
 }
