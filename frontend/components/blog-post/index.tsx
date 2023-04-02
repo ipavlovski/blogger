@@ -3,6 +3,10 @@ import { useActiveBlogpost } from 'frontend/apis/queries'
 import MonacoEditor from './editor'
 import Entries from './entries'
 import Metadata from './metadata'
+import Editor from './editor2'
+import TreeView from './tree-view'
+
+import { nodes } from 'frontend/apis/stores'
 
 
 export default function Blogpost() {
@@ -10,19 +14,17 @@ export default function Blogpost() {
   if (! blogpost) return null
 
   return (
-    <div >
-      <Container pt={16} size={'sm'}>
-        <Metadata blogpost={blogpost}/>
-        <MonacoEditor height={'13vh'} />
-      </Container>
-
+    <Container size={'md'}>
       <Grid m={0} p={0}>
-        <Grid.Col span={4}>
+        <Grid.Col span={3}>
+          {nodes.map((treeNode, ind) => <TreeView key={ind} treeNode={treeNode} />)}
         </Grid.Col>
-        <Grid.Col span={8}>
+        <Grid.Col span={9}>
+          <Metadata blogpost={blogpost}/>
+          <Editor content={''}/>
           <Entries entries={blogpost.entries} />
         </Grid.Col>
       </Grid>
-    </div>
+    </Container>
   )
 }

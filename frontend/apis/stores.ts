@@ -41,3 +41,31 @@ export const useUiStore = create<UiStore>((set) => ({
   }
 }))
 
+
+// const nodes: TreeNode[]
+export const nodes = [
+  {
+    item: { name: 'test', id: 1, path: [] },
+    leafs: [],
+    children: [
+      {
+        item: { name: 'test2', id: 2, path: [1] },
+        leafs: [{ id: 1, title: 'lol' }, { id: 2, title: 'lol2' }],
+        children: [],
+        depth: 2,
+      },
+    ],
+    depth: 1
+  }
+]
+
+
+interface MarkdownStore {
+  markdown: string,
+  setMarkdown: (markdown: string) => void
+}
+
+export const useMarkdownStore = create<MarkdownStore>((set) => ({
+  markdown: '',
+  setMarkdown: (markdown) => set(() => ({ markdown }))
+}))
