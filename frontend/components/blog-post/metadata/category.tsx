@@ -71,7 +71,7 @@ function CategoryView({ category }: {category: Category | null}) {
   return (
     <Flex gap={12}>
       {category == null ?
-        <Anchor component="button" td='underline'>%category:null</Anchor> :
+        <Anchor component="button" td='underline'>%none</Anchor> :
         <Anchor component="button" td='underline'>%{category.name}</Anchor>}
     </Flex>
   )

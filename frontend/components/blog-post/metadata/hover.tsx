@@ -13,7 +13,7 @@ const useStyles = createStyles((theme) => ({
 function EditButton({ startEdit }: {startEdit: () => void}) {
   return (
     <ActionIcon onClick={startEdit} size={32} radius="xl" variant="transparent" color='cactus.2'>
-      <IconAsteriskSimple size={18} stroke={2}/>
+      <IconAsteriskSimple size={14} stroke={2}/>
     </ActionIcon>
   )
 }

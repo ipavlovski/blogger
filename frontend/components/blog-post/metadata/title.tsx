@@ -1,6 +1,6 @@
-import { ActionIcon, Box, createStyles, HoverCard, Text, TextInput } from '@mantine/core'
-import { getHotkeyHandler, useDisclosure } from '@mantine/hooks'
-import { IconEdit } from '@tabler/icons-react'
+import { createStyles, Text, TextInput } from '@mantine/core'
+import { getHotkeyHandler } from '@mantine/hooks'
+import HoverEdit, { useHoverDisclosure } from 'components/blog-post/metadata/hover'
 import { useUpdateBlogpost } from 'frontend/apis/queries'
 import { useState } from 'react'
 
@@ -28,12 +28,11 @@ const useStyles = createStyles((theme) => ({
 }))
 
 
-export default function BlogpostTitle({ title: initTitle, blogpostId }:
-{ title: string, blogpostId: number }) {
+function TitleEditor({ stopEdit, blogpostId, title: initTitle }:
+{ stopEdit: () => void, blogpostId: number, title: string}) {
 
-  const { classes: { input, root, text, dropdown } } = useStyles()
+  const { classes: { input, root } } = useStyles()
   const [title, setTitle] = useState(initTitle)
-  const [isEditing, { open: startEdit, close: stopEdit }] = useDisclosure(false)
   const updateBlogpost = useUpdateBlogpost()
 
   const handleSubmit = async () => {
@@ -42,26 +41,32 @@ export default function BlogpostTitle({ title: initTitle, blogpostId }:
   }
 
   return (
-    <HoverCard disabled={isEditing} classNames={{ dropdown }}
-      shadow="sm" position='left' offset={-20} openDelay={100}>
+    <TextInput
+      style={{ display: 'inline-block' }}
+      autoFocus variant='default' classNames={{ input, root }}
+      value={title} onChange={(event) => setTitle(event.currentTarget.value)}
+      onKeyDown={getHotkeyHandler([['Escape', handleSubmit]])} />
+  )
+}
 
-      <HoverCard.Target>
-        {isEditing ?
-          <TextInput
-            style={{ display: 'inline-block' }}
-            autoFocus variant='default' classNames={{ input, root }}
-            value={title} onChange={(event) => setTitle(event.currentTarget.value)}
-            onKeyDown={getHotkeyHandler([['Escape', handleSubmit]])} /> :
-          <Text className={text}>{title}</Text>}
-      </HoverCard.Target>
+function TitleView({ title }: {title: string}) {
+  const { classes: { text } } = useStyles()
+  return (
+    <Text className={text}>{title}</Text>
+  )
+}
 
-      <HoverCard.Dropdown>
-        <ActionIcon onClick={startEdit}
-          size={32} radius="xl" variant="transparent" color='cactus.1' >
-          <IconEdit size={26} stroke={1.5}/>
-        </ActionIcon>
-      </HoverCard.Dropdown>
+export default function BlogpostTitle({ title, blogpostId }:
+{ title: string, blogpostId: number }) {
 
-    </HoverCard>
+  const disclosure= useHoverDisclosure()
+  const [isEditing, { close: stopEdit }] = disclosure
+
+  return (
+    <HoverEdit disclosure={disclosure}>
+      {! isEditing ?
+        <TitleView title={title}/> :
+        <TitleEditor stopEdit={stopEdit} blogpostId={blogpostId} title={title}/>}
+    </HoverEdit>
   )
 }
