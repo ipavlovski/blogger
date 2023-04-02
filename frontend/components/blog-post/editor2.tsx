@@ -48,7 +48,7 @@ export default function Editor({ content }: {content: string}) {
   }, [value])
 
   return (
-    <RichTextEditor editor={editor} >
+    <RichTextEditor editor={editor} style={{marginTop: 24}}>
       <RichTextEditor.Toolbar sticky stickyOffset={60}>
         <RichTextEditor.ControlsGroup>
           <RichTextEditor.Bold />

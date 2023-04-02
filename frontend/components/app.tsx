@@ -13,13 +13,10 @@ import Header from 'components/header'
 
 function Root() {
   return (
-    <>
-      <Container pt={16} size={'sm'}>
-        <Header />
-      </Container>
+    <Container size={'md'} >
+      <Header />
       <Outlet />
-    </>
-
+    </Container>
   )
 }
 

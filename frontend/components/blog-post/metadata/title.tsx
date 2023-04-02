@@ -1,4 +1,4 @@
-import { ActionIcon, createStyles, HoverCard, Text, TextInput } from '@mantine/core'
+import { ActionIcon, Box, createStyles, HoverCard, Text, TextInput } from '@mantine/core'
 import { getHotkeyHandler, useDisclosure } from '@mantine/hooks'
 import { IconEdit } from '@tabler/icons-react'
 import { useUpdateBlogpost } from 'frontend/apis/queries'
@@ -9,20 +9,19 @@ const useStyles = createStyles((theme) => ({
   input: {
     color: '#2BBC8A',
     backgroundColor: 'transparent',
-    fontSize: 21
+    fontSize: 21,
   },
   root: {
     display: 'inline-block',
-    marginBottom: 14
   },
   text: {
     display: 'inline-block',
     color: theme.colors.cactus[0],
     fontWeight: 'bold',
-    fontSize: 27,
-    marginBottom: 14
+    fontSize: 24,
   },
   dropdown: {
+    display: 'inline-block',
     background: 'none',
     border: 'none'
   }
@@ -43,24 +42,22 @@ export default function BlogpostTitle({ title: initTitle, blogpostId }:
   }
 
   return (
-    <HoverCard disabled={isEditing}
-      shadow="sm" position='right' openDelay={300} classNames={{ dropdown }}
-    >
+    <HoverCard disabled={isEditing} classNames={{ dropdown }}
+      shadow="sm" position='left' offset={-20} openDelay={100}>
+
       <HoverCard.Target>
         {isEditing ?
           <TextInput
+            style={{ display: 'inline-block' }}
             autoFocus variant='default' classNames={{ input, root }}
             value={title} onChange={(event) => setTitle(event.currentTarget.value)}
-            onKeyDown={getHotkeyHandler([['Escape', handleSubmit]])}
-          /> :
-          <Text className={text} >
-            {title}
-          </Text>}
+            onKeyDown={getHotkeyHandler([['Escape', handleSubmit]])} /> :
+          <Text className={text}>{title}</Text>}
       </HoverCard.Target>
 
       <HoverCard.Dropdown>
         <ActionIcon onClick={startEdit}
-          size={32} radius="xl" variant="transparent" color='cactus.0'>
+          size={32} radius="xl" variant="transparent" color='cactus.1' >
           <IconEdit size={26} stroke={1.5}/>
         </ActionIcon>
       </HoverCard.Dropdown>

@@ -67,6 +67,17 @@ export const useGetTags = () => {
   return tags
 }
 
+export const useCategories = () => {
+  const createCategory = trpc.createCategory.useMutation()
+  const { data: categories = [] } = trpc.getCategories.useQuery()
+
+  return [categories, createCategory] as const
+}
+
+// export const useCreateCategory = () =>
+// export const useGetCategories = () => {
+// }
+
 
 type EditorValue = {entryId: number | null, markdown: string}
 
@@ -87,5 +98,6 @@ export const useEditorValue = () => {
 
 ////////////// CACHE
 
-export const useBlogpostContext = () => trpc.useContext().getActiveBlogpost
-export const useTagsContext = () => trpc.useContext().getTags
+export const useTrpcContext = () => trpc.useContext()
+// export const useBlogpostContext = () => trpc.useContext().getActiveBlogpost
+// export const useTagsContext = () => trpc.useContext().getTags

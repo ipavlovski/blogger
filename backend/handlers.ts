@@ -111,3 +111,11 @@ export async function updateBlogpost(blogpostId: number, opts: { title?: string,
 export async function createTag(name: string) {
   return prisma.tag.create({ data: { name } })
 }
+
+export function getCategories() {
+  return prisma.category.findMany()
+}
+
+export function createCategory(name: string) {
+  return prisma.category.create({ data: { name } })
+}

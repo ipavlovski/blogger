@@ -8,7 +8,7 @@ import { debounce } from 'rxjs/operators'
 import ClipboardHandler from 'frontend/apis/clipboard'
 import { SERVER_URL } from 'frontend/apis/utils'
 import {
-  useBlogpostContext, useCaptureMedia, useCreateEntry, useEditorValue, useUpdateEntry
+  useBlogpostContext, useCaptureMedia, useCreateEntry, useEditorValue, useTrpcContext, useUpdateEntry
 } from 'frontend/apis/queries'
 
 import { useLocalStorage } from '@mantine/hooks'
@@ -22,7 +22,7 @@ export default function MonacoEditor({ height }: {height: number | string}) {
   const createEntry = useCreateEntry()
   const updateEntry = useUpdateEntry()
   const captureMedia = useCaptureMedia()
-  const blogpostContext = useBlogpostContext()
+  const trpcContext = useTrpcContext()
 
 
   const handleMonacoPaste = async (e: globalThis.ClipboardEvent) => {
@@ -94,12 +94,12 @@ export default function MonacoEditor({ height }: {height: number | string}) {
         updateEntry.mutate({ entryId, markdown }, { onSuccess: () => {
           clearEntry()
           editor.setValue('')
-          blogpostContext.invalidate()
+          trpcContext.getActiveBlogpost.invalidate()
         } }) :
         createEntry.mutate({ blogpostId, markdown }, { onSuccess: () => {
           clearEntry()
           editor.setValue('')
-          blogpostContext.invalidate()
+          trpcContext.getActiveBlogpost.invalidate()
         } })
     })
 

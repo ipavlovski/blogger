@@ -31,8 +31,9 @@ export const appRouter = t.router({
   updateBlogpost: t.procedure.input(
     z.object({
       blogpostId: z.number(),
+      title: z.string().optional(),
       tags: z.string().array().optional(),
-      title: z.string().optional()
+      category: z.string().optional()
     })
   ).mutation(async ({ input: { blogpostId, ...params } }) => {
     return await h.updateBlogpost(blogpostId, params)
@@ -70,5 +71,14 @@ export const appRouter = t.router({
     return await h.createTag(name)
   }),
 
+  getCategories: t.procedure.query(async () => {
+    return await h.getCategories()
+  }),
+
+  createCategory: t.procedure.input(
+    z.string()
+  ).mutation(async ({ input: name }) => {
+    return await h.createCategory(name)
+  }),
 
 })

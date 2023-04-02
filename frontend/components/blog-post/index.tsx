@@ -14,17 +14,18 @@ export default function Blogpost() {
   if (! blogpost) return null
 
   return (
-    <Container size={'md'}>
+    <>
+      <Metadata blogpost={blogpost}/>
       <Grid m={0} p={0}>
         <Grid.Col span={3}>
           {nodes.map((treeNode, ind) => <TreeView key={ind} treeNode={treeNode} />)}
         </Grid.Col>
         <Grid.Col span={9}>
-          <Metadata blogpost={blogpost}/>
           <Editor content={''}/>
           <Entries entries={blogpost.entries} />
         </Grid.Col>
       </Grid>
-    </Container>
+    </>
+
   )
 }

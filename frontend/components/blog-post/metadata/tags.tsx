@@ -4,7 +4,7 @@ import { IconEdit } from '@tabler/icons-react'
 import { useState } from 'react'
 import { Tag } from '@prisma/client'
 
-import { useBlogpostContext, useCreateTag, useGetTags, useTagsContext, useUpdateBlogpost } from 'frontend/apis/queries'
+import { useTrpcContext, useCreateTag, useGetTags, useUpdateBlogpost } from 'frontend/apis/queries'
 
 
 const useStyles = createStyles((theme) => ({
@@ -24,7 +24,7 @@ const useStyles = createStyles((theme) => ({
   },
   dropdown: {
     background: 'none',
-    border: 'none'
+    border: 'none',
   }
 }))
 
@@ -32,7 +32,7 @@ const useStyles = createStyles((theme) => ({
 function EditButton({ startEdit }: {startEdit: () => void}) {
   return (
     <ActionIcon onClick={startEdit}
-      size={32} radius="xl" variant="transparent" color='cactus.0'>
+      size={32} radius="xl" variant="transparent" color='cactus.1'>
       <IconEdit size={26} stroke={1.5}/>
     </ActionIcon>
   )
@@ -47,17 +47,18 @@ function TagSelector({ stopEdit, blogpostId, tags: blogpostTags }:
   const allTags = useGetTags()
   const updateBlogpost = useUpdateBlogpost()
   const createTag = useCreateTag()
-  const blogpostContext = useBlogpostContext()
-  const tagsContext = useTagsContext()
+  const trpcContext = useTrpcContext()
+  // const blogpostContext = useBlogpostContext()
+  // const tagsContext = useTagsContext()
 
   const handleSubmit = async () => {
     stopEdit()
     await updateBlogpost.mutateAsync({ blogpostId, tags })
-    blogpostContext.invalidate()
+    trpcContext.getActiveBlogpost.invalidate()
   }
 
   const handleCreate = (query: string) => {
-    createTag.mutate(query, { onSuccess: () => tagsContext.invalidate() })
+    createTag.mutate(query, { onSuccess: () => trpcContext.getTags.invalidate() })
     setTags((current) => [...current, query])
     return query
   }
@@ -83,7 +84,7 @@ function TagSelector({ stopEdit, blogpostId, tags: blogpostTags }:
 function TagView({ tags }: {tags: Tag[]}) {
 
   return (
-    <Flex gap={12}>
+    <Flex gap={12} >
       {tags.length == 0 ?
         <Anchor component="button" td='underline'>#untagged</Anchor> :
         tags.map((v) => <Anchor component="button" td='underline' key={v.id}>#{v.name}</Anchor>)}
@@ -99,11 +100,10 @@ export default function TagList({ tags, blogpostId }: {tags: Tag[], blogpostId: 
   return (
     <HoverCard
       classNames={{ dropdown }}
-      disabled={isEditing} shadow="sm" position='right'
-      openDelay={50} closeDelay={300}
+      disabled={isEditing} shadow="sm" position='left' offset={-20} openDelay={100}
     >
       <HoverCard.Target>
-        <Box>
+        <Box style={{flex: '1 1 auto'}}>
           {isEditing ?
             <TagSelector stopEdit={stopEdit} blogpostId={blogpostId} tags={tags}/> :
             <TagView tags={tags}/>}
