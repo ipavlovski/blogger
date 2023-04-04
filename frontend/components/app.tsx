@@ -13,7 +13,7 @@ import Header from 'components/header'
 
 function Root() {
   return (
-    <Container size={'md'} >
+    <Container size={840} style={{ position: 'relative' }}>
       <Header />
       <Outlet />
     </Container>

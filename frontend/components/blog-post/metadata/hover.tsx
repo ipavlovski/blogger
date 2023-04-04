@@ -28,8 +28,8 @@ export default function HoverEdit({ children, disclosure, style }: {
   disclosure: ReturnType<typeof useHoverDisclosure>,
   style?: React.CSSProperties
 }) {
-  const { classes: { dropdown } } = useStyles()
 
+  const { classes: { dropdown } } = useStyles()
   const [isEditing, { open: startEdit }] = disclosure
 
   return (

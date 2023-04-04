@@ -12,7 +12,7 @@ import rehypeParse from 'rehype-parse'
 import rehypeRemark from 'rehype-remark'
 import remarkStringify from 'remark-stringify'
 
-import { useDebouncedState } from '@mantine/hooks'
+import { getHotkeyHandler, useDebouncedState } from '@mantine/hooks'
 import { useEffect } from 'react'
 import { useMarkdownStore } from 'frontend/apis/stores'
 
@@ -47,8 +47,18 @@ export default function Editor({ content }: {content: string}) {
       .process(value).then((v) => setMarkdown(String(v)))
   }, [value])
 
+  const handleEscape = () => {
+    const markdown = useMarkdownStore.getState().markdown
+    console.log(markdown)
+  }
+
   return (
-    <RichTextEditor editor={editor} style={{marginTop: 24}}>
+    <RichTextEditor
+      editor={editor}
+      onKeyDown={getHotkeyHandler([
+        ['Escape', handleEscape],
+      ])}
+      style={{ marginTop: 24 }}>
       <RichTextEditor.Toolbar sticky stickyOffset={60}>
         <RichTextEditor.ControlsGroup>
           <RichTextEditor.Bold />

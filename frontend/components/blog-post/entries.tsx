@@ -1,10 +1,11 @@
 import { Box, HoverCard, createStyles } from '@mantine/core'
 import { Entry } from '@prisma/client'
 import { IconPencil } from '@tabler/icons-react'
+import Editor from 'components/blog-post/editor2'
 
 import Remark from 'components/remark'
 import { useEditorValue } from 'frontend/apis/queries'
-import { useUiStore } from 'frontend/apis/stores'
+import { useMarkdownStore, useUiStore } from 'frontend/apis/stores'
 
 
 const useStyles = createStyles((theme) => ({
@@ -30,11 +31,12 @@ const useStyles = createStyles((theme) => ({
 }))
 
 
-function EntryRender({ entry }: { entry: Entry }) {
+function EntryRenderer({ entry }: { entry: Entry }) {
   const { classes: { leftBorder, dropdown } } = useStyles()
 
+
   const initiateEdit = () => {
-    console.log('clicked!')
+    console.log('clicked edit init!')
   }
 
   return (
@@ -56,7 +58,6 @@ function EntryRender({ entry }: { entry: Entry }) {
       </HoverCard.Dropdown>
     </HoverCard>
   )
-
 }
 
 function PreviewRender() {
@@ -67,14 +68,28 @@ function PreviewRender() {
   )
 }
 
+
 export default function Entries({ entries }: {entries: Entry[]}) {
-  const showPreview = useUiStore((store) => store.showPreview)
+  // const showPreview = useUiStore((store) => store.showPreview)
+
+  if (entries.length == 0) return <Editor content={''}/>
+
 
   return (
     <>
-      {showPreview ?
-        <PreviewRender /> :
-        entries.map((entry) => (<EntryRender key={entry.id} entry={entry}/>))}
+      {entries.map((entry) => (<EntryRenderer key={entry.id} entry={entry}/>))}
     </>
   )
 }
+
+
+// export default function Entries({ entries }: {entries: Entry[]}) {
+//   const showPreview = useUiStore((store) => store.showPreview)
+//   return (
+//     <>
+//       {showPreview ?
+//         <PreviewRender /> :
+//         entries.map((entry) => (<EntryRenderer key={entry.id} entry={entry}/>))}
+//     </>
+//   )
+// }
