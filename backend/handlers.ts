@@ -119,3 +119,7 @@ export function getCategories() {
 export function createCategory(name: string) {
   return prisma.category.create({ data: { name } })
 }
+
+export function deleteEntry(entryId: number) {
+  return prisma.entry.delete({ where: { id: entryId } })
+}

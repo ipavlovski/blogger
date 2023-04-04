@@ -5,7 +5,7 @@ import superjson from 'superjson'
 
 import type { AppRouter } from 'frontend/../trpc'
 import { SERVER_URL } from 'frontend/apis/utils'
-import { useFilterStore } from 'frontend/apis/stores'
+import { useFilterStore, useMarkdownStore } from 'frontend/apis/stores'
 import { useParams } from 'react-router-dom'
 import { useLocalStorage } from '@mantine/hooks'
 
@@ -90,4 +90,33 @@ export const useEditorValue = () => {
   })
 
   return { entryId, markdown, setEntry, clearEntry, blogpostId }
+}
+
+
+export const useSaveEditorState = () => {
+  const createEntry = trpc.createEntry.useMutation()
+  const updatEntry = trpc.updateEntry.useMutation()
+  const deleteEntry = trpc.deleteEntry.useMutation()
+
+  return async () => {
+    const { blogpostId, entryId, markdown } = useMarkdownStore.getState()
+    console.log(blogpostId)
+
+    if (blogpostId == null) {
+      console.log('BlogpostId == null, this should not have happened...')
+      return
+    }
+
+    // save data to server
+    const trimmedContents = markdown.trim()
+    if (trimmedContents != '') {
+      entryId ?
+        await updatEntry.mutateAsync({ entryId, markdown }) :
+        await createEntry.mutateAsync({ blogpostId, markdown })
+    }
+
+    if (trimmedContents == '') {
+      entryId && await deleteEntry.mutateAsync({ entryId })
+    }
+  }
 }

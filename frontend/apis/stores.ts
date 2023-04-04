@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 
 interface FilterStore {
   title: string | null
@@ -61,11 +62,24 @@ export const nodes = [
 
 
 interface MarkdownStore {
+  blogpostId: number | null,
+  entryId: number | null,
   markdown: string,
   setMarkdown: (markdown: string) => void
+  setState: (blogpostId: number | null, entryId: number | null, markdown: string) => void
+  stopEdit: () => void
 }
 
-export const useMarkdownStore = create<MarkdownStore>((set) => ({
-  markdown: '',
-  setMarkdown: (markdown) => set(() => ({ markdown }))
-}))
+export const useMarkdownStore = create<MarkdownStore>()(
+  persist(
+    (set) => ({
+      blogpostId: null,
+      entryId: null,
+      markdown: '',
+      setMarkdown: (markdown) => set(() => ({ markdown })),
+      setState: (blogpostId, entryId, markdown) => set(() => ({ blogpostId, entryId, markdown })),
+      stopEdit: () => set(() => ({entryId: null, markdown: ''}))
+    }),
+    { name: 'blogger-store' }
+  )
+)

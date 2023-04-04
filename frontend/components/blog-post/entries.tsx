@@ -4,8 +4,7 @@ import { IconPencil } from '@tabler/icons-react'
 import Editor from 'components/blog-post/editor2'
 
 import Remark from 'components/remark'
-import { useEditorValue } from 'frontend/apis/queries'
-import { useMarkdownStore, useUiStore } from 'frontend/apis/stores'
+import { useMarkdownStore } from 'frontend/apis/stores'
 
 
 const useStyles = createStyles((theme) => ({
@@ -61,8 +60,7 @@ function EntryRenderer({ entry }: { entry: Entry }) {
 }
 
 function PreviewRender() {
-  const { markdown } = useEditorValue()
-
+  const markdown = useMarkdownStore((store) => store.markdown)
   return (
     <Remark markdown={markdown}/>
   )

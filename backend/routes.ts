@@ -24,6 +24,13 @@ export const appRouter = t.router({
     return await h.updateEntry(entryId, markdown)
   }),
 
+  deleteEntry: t.procedure.input(
+    z.object({ entryId: z.number() })
+  ).mutation(async ({ input: { entryId } }) => {
+    return await h.deleteEntry(entryId)
+  }),
+
+
   createBlogpost: t.procedure.mutation(async () => {
     return await h.createBlogpost()
   }),

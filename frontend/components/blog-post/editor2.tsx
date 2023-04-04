@@ -15,12 +15,15 @@ import remarkStringify from 'remark-stringify'
 import { getHotkeyHandler, useDebouncedState } from '@mantine/hooks'
 import { useEffect } from 'react'
 import { useMarkdownStore } from 'frontend/apis/stores'
+import { useSaveEditorState } from 'frontend/apis/queries'
 
 
 export default function Editor({ content }: {content: string}) {
 
   const [value, setValue] = useDebouncedState<string>(content, 400)
   const setMarkdown = useMarkdownStore((state) => state.setMarkdown)
+  const stopEdit = useMarkdownStore((state) => state.stopEdit)
+  const saveEditorState = useSaveEditorState()
 
   const editor = useEditor({
     content,
@@ -44,12 +47,18 @@ export default function Editor({ content }: {content: string}) {
       .use(rehypeParse)
       .use(rehypeRemark)
       .use(remarkStringify)
-      .process(value).then((v) => setMarkdown(String(v)))
+      .process(value)
+      .then((v) => {
+        console.log('setting markdown...')
+        setMarkdown(String(v))
+      })
   }, [value])
 
   const handleEscape = () => {
-    const markdown = useMarkdownStore.getState().markdown
-    console.log(markdown)
+    console.log('ESCAPE PRESSED: will try to save')
+    console.log(`handle blogpostId: ${useMarkdownStore.getState().blogpostId}`)
+    saveEditorState().then(() => stopEdit())
+
   }
 
   return (
