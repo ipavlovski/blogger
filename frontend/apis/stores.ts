@@ -1,3 +1,4 @@
+import { TreeNode } from 'components/blog-post/tree-view'
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
@@ -44,7 +45,7 @@ export const useUiStore = create<UiStore>((set) => ({
 
 
 // const nodes: TreeNode[]
-export const nodes = [
+export const nodes: TreeNode[] = [
   {
     item: { name: 'test', id: 1, path: [] },
     leafs: [],
@@ -65,9 +66,15 @@ interface MarkdownStore {
   blogpostId: number | null,
   entryId: number | null,
   markdown: string,
-  setMarkdown: (markdown: string) => void
-  setState: (blogpostId: number | null, entryId: number | null, markdown: string) => void
-  stopEdit: () => void
+
+  actions: {
+    clearState: () => void
+    setMarkdown: (markdown: string) => void
+    stopEdit: () => void
+    startEdit: (entryId: number, markdown: string) => void
+    setBlogpost: (blogpostId: number) => void
+  }
+
 }
 
 export const useMarkdownStore = create<MarkdownStore>()(
@@ -76,10 +83,17 @@ export const useMarkdownStore = create<MarkdownStore>()(
       blogpostId: null,
       entryId: null,
       markdown: '',
-      setMarkdown: (markdown) => set(() => ({ markdown })),
-      setState: (blogpostId, entryId, markdown) => set(() => ({ blogpostId, entryId, markdown })),
-      stopEdit: () => set(() => ({entryId: null, markdown: ''}))
+      actions: {
+        clearState: () => set(() => ({ blogpostId: null, entryId: null, markdown: '' })),
+        setMarkdown: (markdown) => set(() => ({ markdown })),
+        stopEdit: () => set(() => ({ entryId: null, markdown: '' })),
+        startEdit: (entryId, markdown) => set(() => ({ entryId, markdown })),
+        setBlogpost: (blogpostId) => set(() => ({ blogpostId, entryId: null, markdown: '' }))
+      }
     }),
-    { name: 'blogger-store' }
+    {
+      name: 'blogger-store',
+      partialize: ({ blogpostId, entryId, markdown }) => ({ blogpostId, entryId, markdown })
+    }
   )
 )

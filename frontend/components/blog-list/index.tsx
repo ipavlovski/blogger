@@ -6,14 +6,11 @@ import { useMarkdownStore } from 'frontend/apis/stores'
 import { useSaveEditorState } from 'frontend/apis/queries'
 
 export default function Blogposts() {
-  const blogpostId = useMarkdownStore((store) => store.blogpostId)
-
   const saveEditorState = useSaveEditorState()
-  const setEditorState = useMarkdownStore((state) => state.setState)
+  const { clearState } = useMarkdownStore((state) => state.actions)
 
   useEffect(() => {
-    if (blogpostId == null) return
-    saveEditorState().then(() => setEditorState(null, null, ''))
+    saveEditorState().then(() => clearState())
   }, [])
 
   return (

@@ -1,8 +1,6 @@
 import { ActionIcon, Flex, Text } from '@mantine/core'
 import { IconPlaylistAdd } from '@tabler/icons-react'
 import { useCreateBlogpost, useFilteredBlogposts } from 'frontend/apis/queries'
-import { useMarkdownStore } from 'frontend/apis/stores'
-import { useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 
 export function NewPostButton() {

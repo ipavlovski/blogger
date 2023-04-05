@@ -1,28 +1,26 @@
-import { RichTextEditor, Link } from '@mantine/tiptap'
-import { useEditor } from '@tiptap/react'
+import { getHotkeyHandler, useDebouncedState } from '@mantine/hooks'
+import { Link, RichTextEditor } from '@mantine/tiptap'
 import Highlight from '@tiptap/extension-highlight'
-import StarterKit from '@tiptap/starter-kit'
-import Underline from '@tiptap/extension-underline'
-import TextAlign from '@tiptap/extension-text-align'
-import Superscript from '@tiptap/extension-superscript'
 import SubScript from '@tiptap/extension-subscript'
-
-import { unified } from 'unified'
+import Superscript from '@tiptap/extension-superscript'
+import TextAlign from '@tiptap/extension-text-align'
+import Underline from '@tiptap/extension-underline'
+import { useEditor } from '@tiptap/react'
+import StarterKit from '@tiptap/starter-kit'
+import { useEffect } from 'react'
 import rehypeParse from 'rehype-parse'
 import rehypeRemark from 'rehype-remark'
 import remarkStringify from 'remark-stringify'
+import { unified } from 'unified'
 
-import { getHotkeyHandler, useDebouncedState } from '@mantine/hooks'
-import { useEffect } from 'react'
-import { useMarkdownStore } from 'frontend/apis/stores'
 import { useSaveEditorState } from 'frontend/apis/queries'
+import { useMarkdownStore } from 'frontend/apis/stores'
 
 
 export default function Editor({ content }: {content: string}) {
 
   const [value, setValue] = useDebouncedState<string>(content, 400)
-  const setMarkdown = useMarkdownStore((state) => state.setMarkdown)
-  const stopEdit = useMarkdownStore((state) => state.stopEdit)
+  const { setMarkdown, stopEdit } = useMarkdownStore((state) => state.actions)
   const saveEditorState = useSaveEditorState()
 
   const editor = useEditor({
@@ -55,7 +53,6 @@ export default function Editor({ content }: {content: string}) {
   }, [value])
 
   const handleEscape = () => {
-    console.log('ESCAPE PRESSED: will try to save')
     console.log(`handle blogpostId: ${useMarkdownStore.getState().blogpostId}`)
     saveEditorState().then(() => stopEdit())
 

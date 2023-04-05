@@ -92,7 +92,16 @@ export const useEditorValue = () => {
   return { entryId, markdown, setEntry, clearEntry, blogpostId }
 }
 
-
+/**
+ * Generic 'save' action that can be called from anywhere.
+ * Utilizes non-reactive stored blogpostId, entryId, markdown values.
+ * Validity of data depends on blogpostId -> if it is null, then not supposed to be calling this.
+ * Handles the following scenarios:
+ * - entryId is null, markdown is NOT empty: create a new entry
+ * - entryId is NOT null, markdown is NOT empty: update an existing entry
+ * - entryId is NOT null, markdown is empty: delete the existing entry
+ * - entryId is null, markdown is empty: dont do anything
+ */
 export const useSaveEditorState = () => {
   const createEntry = trpc.createEntry.useMutation()
   const updatEntry = trpc.updateEntry.useMutation()
@@ -100,10 +109,9 @@ export const useSaveEditorState = () => {
 
   return async () => {
     const { blogpostId, entryId, markdown } = useMarkdownStore.getState()
-    console.log(blogpostId)
 
+    // when blogpostId == null, there is nothing to save
     if (blogpostId == null) {
-      console.log('BlogpostId == null, this should not have happened...')
       return
     }
 
@@ -113,10 +121,13 @@ export const useSaveEditorState = () => {
       entryId ?
         await updatEntry.mutateAsync({ entryId, markdown }) :
         await createEntry.mutateAsync({ blogpostId, markdown })
+      return
     }
 
+    // if the content is empty, simply delete the entry
     if (trimmedContents == '') {
       entryId && await deleteEntry.mutateAsync({ entryId })
+      return
     }
   }
 }

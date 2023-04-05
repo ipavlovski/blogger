@@ -1,42 +1,40 @@
 import { Grid } from '@mantine/core'
+import { useEffect } from 'react'
+
 import { useActiveBlogpost, useSaveEditorState } from 'frontend/apis/queries'
-import Editor from './editor2'
+import { nodes, useMarkdownStore } from 'frontend/apis/stores'
 import Entries from './entries'
 import Metadata from './metadata'
 import TreeView from './tree-view'
-
-import { nodes, useMarkdownStore } from 'frontend/apis/stores'
-import { useCallback, useEffect } from 'react'
-import { useBeforeUnload } from 'react-router-dom'
-
-
-type EditorCache = {blogpostId: number | undefined, entryId: number | null, markdown: string}
 
 
 export default function Blogpost() {
   const blogpost = useActiveBlogpost()
   const storedBlogpostId = useMarkdownStore((state) => state.blogpostId)
-  const storedEntryId = useMarkdownStore((state) => state.entryId)
-  const setEditorState = useMarkdownStore((state) => state.setState)
+  const { setBlogpost } = useMarkdownStore((state) => state.actions)
   const saveEditorState = useSaveEditorState()
 
   useEffect(() => {
     if (! blogpost) return
 
+    // if the current and stored blogpost-ids match, this is most likely a refresh
+    // dont do anything
     if (blogpost.id == storedBlogpostId) {
       console.log('refreshing blogpost - no changes')
       return
     }
 
-    if (storedBlogpostId == null) {
-      setEditorState(blogpost.id, null, '')
-    }
-
+    // if the blogpost is different (but not null), this is likely a direct link
+    // save the previous state
     if (storedBlogpostId != null && blogpost.id != storedBlogpostId) {
       console.log('switching TO a blogpost')
-      saveEditorState().then(() => setEditorState(blogpost.id, null, ''))
+      saveEditorState().then(() => setBlogpost(blogpost.id))
       return
     }
+
+    // (default option): most likely storedBlogpostId == null, coming from blogpost-list
+    // set the blogpost id, without setting the state
+    setBlogpost(blogpost.id)
   }, [])
 
 
