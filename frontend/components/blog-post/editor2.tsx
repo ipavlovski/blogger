@@ -7,18 +7,17 @@ import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
 import { useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { useEffect } from 'react'
-import rehypeParse from 'rehype-parse'
-import rehypeRemark from 'rehype-remark'
-import remarkStringify from 'remark-stringify'
-import { unified } from 'unified'
+import { useEffect, useState } from 'react'
 
+
+import { htmlToMarkdown } from 'frontend/apis/parsers'
 import { useSaveEditorState } from 'frontend/apis/queries'
 import { useMarkdownStore } from 'frontend/apis/stores'
 
 
-export default function Editor({ content }: {content: string}) {
+export default function Editor({ markdown }: {markdown: string}) {
 
+  const [content, setContent] = useState(markdown)
   const [value, setValue] = useDebouncedState<string>(content, 400)
   const { setMarkdown, stopEdit } = useMarkdownStore((state) => state.actions)
   const saveEditorState = useSaveEditorState()
@@ -40,22 +39,19 @@ export default function Editor({ content }: {content: string}) {
     },
   })
 
+  // run this only on 'startup'
   useEffect(() => {
-    unified()
-      .use(rehypeParse)
-      .use(rehypeRemark)
-      .use(remarkStringify)
-      .process(value)
-      .then((v) => {
-        console.log('setting markdown...')
-        setMarkdown(String(v))
-      })
+    console.log(`setting the contents: ${markdown}`)
+    setContent(markdown)
+  }, [])
+
+  useEffect(() => {
+    htmlToMarkdown(value).then((md) => setMarkdown(md))
   }, [value])
 
   const handleEscape = () => {
-    console.log(`handle blogpostId: ${useMarkdownStore.getState().blogpostId}`)
+    console.log('Trigger edit escape.')
     saveEditorState().then(() => stopEdit())
-
   }
 
   return (

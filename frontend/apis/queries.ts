@@ -2,12 +2,12 @@ import { QueryClient, useQueryClient } from '@tanstack/react-query'
 import { httpBatchLink } from '@trpc/client'
 import { createTRPCReact } from '@trpc/react-query'
 import superjson from 'superjson'
+import { useParams } from 'react-router-dom'
+import { useLocalStorage } from '@mantine/hooks'
 
 import type { AppRouter } from 'frontend/../trpc'
 import { SERVER_URL } from 'frontend/apis/utils'
 import { useFilterStore, useMarkdownStore } from 'frontend/apis/stores'
-import { useParams } from 'react-router-dom'
-import { useLocalStorage } from '@mantine/hooks'
 
 
 ////////////// TRPC / RQ
@@ -109,6 +109,7 @@ export const useSaveEditorState = () => {
 
   return async () => {
     const { blogpostId, entryId, markdown } = useMarkdownStore.getState()
+    console.log(`useSaveEdit: blogpostId:${blogpostId} entryId:${entryId} md:${markdown}`)
 
     // when blogpostId == null, there is nothing to save
     if (blogpostId == null) {
@@ -118,6 +119,7 @@ export const useSaveEditorState = () => {
     // save data to server
     const trimmedContents = markdown.trim()
     if (trimmedContents != '') {
+      console.log(`entryId:${entryId}: ${entryId ? 'updating' : 'creating'}`)
       entryId ?
         await updatEntry.mutateAsync({ entryId, markdown }) :
         await createEntry.mutateAsync({ blogpostId, markdown })

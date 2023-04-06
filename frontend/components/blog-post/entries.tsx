@@ -32,10 +32,12 @@ const useStyles = createStyles((theme) => ({
 
 function EntryRenderer({ entry }: { entry: Entry }) {
   const { classes: { leftBorder, dropdown } } = useStyles()
-
+  const { startEdit } = useMarkdownStore((state) => state.actions)
+  const { id, markdown } = entry
 
   const initiateEdit = () => {
-    console.log('clicked edit init!')
+    console.log(`starting the edit for entryId:${id} md:${markdown}`)
+    startEdit(id, markdown)
   }
 
   return (
@@ -47,7 +49,7 @@ function EntryRenderer({ entry }: { entry: Entry }) {
     >
       <HoverCard.Target>
         <Box className={leftBorder}>
-          <Remark key={entry.id} markdown={entry.markdown}/>
+          <Remark key={id} markdown={markdown}/>
         </Box>
       </HoverCard.Target>
       <HoverCard.Dropdown >
@@ -69,13 +71,17 @@ function PreviewRender() {
 
 export default function Entries({ entries }: {entries: Entry[]}) {
   // const showPreview = useUiStore((store) => store.showPreview)
-
-  if (entries.length == 0) return <Editor content={''}/>
-
+  const entryId = useMarkdownStore((state) => state.entryId)
+  const markdown = useMarkdownStore((state) => state.markdown)
+  if (entries.length == 0) return <Editor markdown={''}/>
 
   return (
     <>
-      {entries.map((entry) => (<EntryRenderer key={entry.id} entry={entry}/>))}
+      {entries.map((entry) => (
+        entry.id != entryId ?
+          <EntryRenderer key={entry.id} entry={entry}/> :
+          <Editor key={entry.id} markdown={markdown}/>)
+      )}
     </>
   )
 }
