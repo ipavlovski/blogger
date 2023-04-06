@@ -72,15 +72,17 @@ function PreviewRender() {
 export default function Entries({ entries }: {entries: Entry[]}) {
   // const showPreview = useUiStore((store) => store.showPreview)
   const entryId = useMarkdownStore((state) => state.entryId)
-  const markdown = useMarkdownStore((state) => state.markdown)
+  // const markdown = useMarkdownStore((state) => state.markdown)
   if (entries.length == 0) return <Editor markdown={''}/>
+
+  console.log('Reloading all entries...')
 
   return (
     <>
       {entries.map((entry) => (
         entry.id != entryId ?
           <EntryRenderer key={entry.id} entry={entry}/> :
-          <Editor key={entry.id} markdown={markdown}/>)
+          <Editor key={entry.id} markdown={entry.markdown}/>)
       )}
     </>
   )

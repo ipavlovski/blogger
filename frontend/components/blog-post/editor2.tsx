@@ -10,14 +10,14 @@ import StarterKit from '@tiptap/starter-kit'
 import { useEffect, useState } from 'react'
 
 
-import { htmlToMarkdown } from 'frontend/apis/parsers'
+import { htmlToMarkdown, markdownToHtml } from 'frontend/apis/parsers'
 import { useSaveEditorState, useTrpcContext } from 'frontend/apis/queries'
 import { useMarkdownStore } from 'frontend/apis/stores'
 
 
 export default function Editor({ markdown }: {markdown: string}) {
 
-  const [content, setContent] = useState(markdown)
+  const [content,] = useState('')
   const [value, setValue] = useDebouncedState<string>(content, 300)
   const { setMarkdown, stopEdit } = useMarkdownStore((state) => state.actions)
   const saveEditorState = useSaveEditorState()
@@ -42,10 +42,16 @@ export default function Editor({ markdown }: {markdown: string}) {
 
   // run this only on 'startup'
   useEffect(() => {
-    console.log(`setting the contents: ${markdown}`)
-    setContent(markdown)
-  }, [])
+    if (editor == null) return
 
+    markdownToHtml(markdown).then((html) => {
+      console.log('setting html!')
+      editor.commands.setContent(html)
+      setValue(html)
+    })
+  }, [editor])
+
+  // run this every time value changes
   useEffect(() => {
     htmlToMarkdown(value).then((md) => setMarkdown(md))
   }, [value])
@@ -56,7 +62,6 @@ export default function Editor({ markdown }: {markdown: string}) {
     await saveEditorState()
     stopEdit()
     tprcContext.getActiveBlogpost.invalidate()
-
   }
 
   return (
