@@ -11,16 +11,17 @@ import { useEffect, useState } from 'react'
 
 
 import { htmlToMarkdown } from 'frontend/apis/parsers'
-import { useSaveEditorState } from 'frontend/apis/queries'
+import { useSaveEditorState, useTrpcContext } from 'frontend/apis/queries'
 import { useMarkdownStore } from 'frontend/apis/stores'
 
 
 export default function Editor({ markdown }: {markdown: string}) {
 
   const [content, setContent] = useState(markdown)
-  const [value, setValue] = useDebouncedState<string>(content, 400)
+  const [value, setValue] = useDebouncedState<string>(content, 300)
   const { setMarkdown, stopEdit } = useMarkdownStore((state) => state.actions)
   const saveEditorState = useSaveEditorState()
+  const tprcContext = useTrpcContext()
 
   const editor = useEditor({
     content,
@@ -49,9 +50,13 @@ export default function Editor({ markdown }: {markdown: string}) {
     htmlToMarkdown(value).then((md) => setMarkdown(md))
   }, [value])
 
-  const handleEscape = () => {
+  const handleEscape = async () => {
     console.log('Trigger edit escape.')
-    saveEditorState().then(() => stopEdit())
+    await htmlToMarkdown(value).then((md) => setMarkdown(md))
+    await saveEditorState()
+    stopEdit()
+    tprcContext.getActiveBlogpost.invalidate()
+
   }
 
   return (

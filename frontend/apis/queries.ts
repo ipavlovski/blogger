@@ -128,6 +128,7 @@ export const useSaveEditorState = () => {
 
     // if the content is empty, simply delete the entry
     if (trimmedContents == '') {
+      entryId && console.log(`Deleting entry: ${entryId}`) 
       entryId && await deleteEntry.mutateAsync({ entryId })
       return
     }
