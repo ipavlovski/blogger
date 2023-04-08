@@ -9,18 +9,17 @@ import { useCategories, useTrpcContext, useUpdateBlogpost } from 'frontend/apis/
 
 const useStyles = createStyles((theme) => ({
   multiselect: {
-    flexGrow: 1
+    flexGrow: 1,
   },
   input: {
     color: '#2BBC8A',
     backgroundColor: 'transparent',
     fontSize: 21,
-    flexGrow: 1
+    flexGrow: 1,
   },
   root: {
     marginBottom: 14,
-    flexGrow: 1
-
+    flexGrow: 1,
   },
 }))
 

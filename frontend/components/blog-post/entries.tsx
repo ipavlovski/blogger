@@ -42,22 +42,29 @@ const useStyles = createStyles((theme) => ({
     borderRadius: '20px 20px 20px 20px',
     height: 'auto',
     flexGrow: 1
+  },
+  invisible: {
+    transition: 'opacity 0.2s ease-out',
+    opacity: 0,
+  },
+  visible: {
+    opacity: 1,
   }
-
-
 }))
 
 
-function HoverControls({ hovered, initEdit }: {hovered: boolean, initEdit: () => void}) {
-  const { classes: { barRegular, barHover }, cx } = useStyles()
+function HoverControls({ hovered, initEdit, newEdit }:
+{hovered: boolean, initEdit: () => void, newEdit: () => void}) {
+
+  const { classes: { barHover, invisible, visible }, cx } = useStyles()
 
   return (
-    <Stack align='center' spacing={2}>
-      <ActionIcon>
+    <Stack align='center' spacing={2} className={cx(invisible, hovered && visible)}>
+      <ActionIcon onClick={initEdit}>
         <IconEdit />
       </ActionIcon>
-      <Box onClick={initEdit} className={barHover}/>
-      <ActionIcon>
+      <Box className={barHover}/>
+      <ActionIcon onClick={newEdit}>
         <IconNewSection />
       </ActionIcon>
     </Stack>
@@ -75,12 +82,16 @@ function EntryRenderer({ entry }: { entry: Entry }) {
     startEdit(id, markdown)
   }
 
+  const newEdit = () => {
+    console.log(`starting new edit for id:${id}`)
+  }
+
   return (
     <Flex ref={ref} gap={14}>
       <Box style={{ flexGrow: 1 }}>
         <Remark key={id} markdown={markdown}/>
       </Box>
-      <HoverControls hovered={hovered} initEdit={initEdit} />
+      <HoverControls hovered={hovered} initEdit={initEdit} newEdit={newEdit} />
     </Flex>
   )
 }
@@ -95,9 +106,7 @@ function PreviewRender() {
 
 
 export default function Entries({ entries }: {entries: Entry[]}) {
-  // const showPreview = useUiStore((store) => store.showPreview)
   const entryId = useMarkdownStore((state) => state.entryId)
-  // const markdown = useMarkdownStore((state) => state.markdown)
   if (entries.length == 0) return <Editor markdown={''}/>
 
   console.log('Reloading all entries...')
@@ -112,15 +121,3 @@ export default function Entries({ entries }: {entries: Entry[]}) {
     </>
   )
 }
-
-
-// export default function Entries({ entries }: {entries: Entry[]}) {
-//   const showPreview = useUiStore((store) => store.showPreview)
-//   return (
-//     <>
-//       {showPreview ?
-//         <PreviewRender /> :
-//         entries.map((entry) => (<EntryRenderer key={entry.id} entry={entry}/>))}
-//     </>
-//   )
-// }

@@ -34,7 +34,7 @@ export default function HoverEdit({ children, disclosure, style }: {
 
   return (
     <HoverCard disabled={isEditing} classNames={{ dropdown }}
-      shadow="sm" position='left' offset={-7} openDelay={100} >
+      shadow="sm" position='left' offset={-6} openDelay={100} >
 
       <HoverCard.Target>
         <Box style={style}>
