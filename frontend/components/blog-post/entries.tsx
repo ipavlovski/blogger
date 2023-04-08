@@ -1,6 +1,7 @@
-import { Box, HoverCard, createStyles } from '@mantine/core'
+import { ActionIcon, Box, Flex, HoverCard, Stack, createStyles } from '@mantine/core'
+import { useHover } from '@mantine/hooks'
 import { Entry } from '@prisma/client'
-import { IconPencil } from '@tabler/icons-react'
+import { IconEdit, IconNewSection, IconPencil } from '@tabler/icons-react'
 import Editor from 'components/blog-post/editor2'
 
 import Remark from 'components/remark'
@@ -23,43 +24,67 @@ const useStyles = createStyles((theme) => ({
     borderRadius: '0',
     border: 'none',
     '&:hover': {
-      color: 'white'
+      color: 'white',
+      cursor: 'pointers'
     },
+  },
+  barRegular: {
+    width: 4,
+    backgroundColor: theme.colors.dark[7],
+    cursor: 'pointer',
+    marginRight: 20,
+    marginTop: 5,
+    borderRadius: '20px 20px 20px 20px'
+  },
+  barHover: {
+    backgroundColor: theme.colors.cactus[2],
+    width: 6,
+    borderRadius: '20px 20px 20px 20px',
+    height: 'auto',
+    flexGrow: 1
   }
+
 
 }))
 
 
-function EntryRenderer({ entry }: { entry: Entry }) {
-  const { classes: { leftBorder, dropdown } } = useStyles()
-  const { startEdit } = useMarkdownStore((state) => state.actions)
-  const { id, markdown } = entry
+function HoverControls({ hovered, initEdit }: {hovered: boolean, initEdit: () => void}) {
+  const { classes: { barRegular, barHover }, cx } = useStyles()
 
-  const initiateEdit = () => {
-    console.log(`starting the edit for entryId:${id} md:${markdown}`)
+  return (
+    <Stack align='center' spacing={2}>
+      <ActionIcon>
+        <IconEdit />
+      </ActionIcon>
+      <Box onClick={initEdit} className={barHover}/>
+      <ActionIcon>
+        <IconNewSection />
+      </ActionIcon>
+    </Stack>
+  )
+}
+
+
+function EntryRenderer({ entry }: { entry: Entry }) {
+  const { id, markdown } = entry
+  const { hovered, ref } = useHover()
+  const { startEdit } = useMarkdownStore((state) => state.actions)
+
+  const initEdit = () => {
+    console.log(`starting the edit for entryId:${id}`)
     startEdit(id, markdown)
   }
 
   return (
-    <HoverCard
-      classNames={{ dropdown }}
-      openDelay={0} closeDelay={0}
-      transitionProps={{ duration: 0 }}
-      position='top-start'
-    >
-      <HoverCard.Target>
-        <Box className={leftBorder}>
-          <Remark key={id} markdown={markdown}/>
-        </Box>
-      </HoverCard.Target>
-      <HoverCard.Dropdown >
-        <Box onClick={initiateEdit}>
-          <IconPencil size={20} stroke={1.5}/>
-        </Box>
-      </HoverCard.Dropdown>
-    </HoverCard>
+    <Flex ref={ref} gap={14}>
+      <Box style={{ flexGrow: 1 }}>
+        <Remark key={id} markdown={markdown}/>
+      </Box>
+      <HoverControls hovered={hovered} initEdit={initEdit} />
+    </Flex>
   )
 }
+
 
 function PreviewRender() {
   const markdown = useMarkdownStore((store) => store.markdown)

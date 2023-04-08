@@ -45,7 +45,6 @@ export default function Editor({ markdown }: {markdown: string}) {
     if (editor == null) return
 
     markdownToHtml(markdown).then((html) => {
-      console.log('setting html!')
       editor.commands.setContent(html)
       setValue(html)
     })
@@ -57,7 +56,6 @@ export default function Editor({ markdown }: {markdown: string}) {
   }, [value])
 
   const handleEscape = async () => {
-    console.log('Trigger edit escape.')
     await htmlToMarkdown(value).then((md) => setMarkdown(md))
     await saveEditorState()
     stopEdit()
