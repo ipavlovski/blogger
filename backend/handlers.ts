@@ -9,9 +9,23 @@ const execute = promisify(exec)
 const prisma = new PrismaClient()
 
 
-export async function createEntry( blogpostId: number, markdown: string) {
+export async function createEntry( blogpostId: number, markdown: string, index?: number) {
+  // 'creating an entry' counts as an 'update to a blogpost'
   await prisma.blogpost.update({ where: { id: blogpostId }, data: { updatedAt: new Date() } })
-  return prisma.entry.create({ data: { blogpostId, markdown } })
+
+  if (index != null) {
+    await prisma.entry.updateMany({
+      where: { blogpostId, AND: { index: { gte: index } } },
+      data: { index: { increment: 1 } }
+    })
+    return prisma.entry.create({ data: { blogpostId, markdown, index } })
+  } else {
+    const entry = await prisma.entry.findFirst({
+      where: { blogpostId }, orderBy: { index: 'desc' }
+    })
+    const index = entry ? entry.index : 1
+    return await prisma.entry.create({ data: { blogpostId, markdown, index } })
+  }
 }
 
 

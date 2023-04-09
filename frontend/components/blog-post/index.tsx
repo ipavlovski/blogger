@@ -48,7 +48,7 @@ export default function Blogpost() {
           {nodes.map((treeNode, ind) => <TreeView key={ind} treeNode={treeNode} />)}
         </Grid.Col>
         <Grid.Col span={9}>
-          <Entries entries={blogpost.entries} />
+          <Entries entries={blogpost.entries.sort((a, b) => a.index - b.index)} />
         </Grid.Col>
       </Grid>
     </>

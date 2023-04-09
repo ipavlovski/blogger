@@ -35,8 +35,7 @@ export const useTrpcContext = () => trpc.useContext()
 
 ////////////// MUTATIONS
 
-export const useCreateEntry = () => trpc.createEntry.useMutation()
-export const useUpdateEntry = () => trpc.updateEntry.useMutation()
+// export const useUpdateEntry = () => trpc.updateEntry.useMutation()
 export const useCaptureMedia = () => trpc.captureMedia.useMutation()
 export const useCreateBlogpost = () => trpc.createBlogpost.useMutation()
 export const useUpdateBlogpost = () => trpc.updateBlogpost.useMutation()
@@ -128,9 +127,30 @@ export const useSaveEditorState = () => {
 
     // if the content is empty, simply delete the entry
     if (trimmedContents == '') {
-      entryId && console.log(`Deleting entry: ${entryId}`) 
+      entryId && console.log(`Deleting entry: ${entryId}`)
       entryId && await deleteEntry.mutateAsync({ entryId })
       return
     }
   }
+}
+
+
+export const useCreateNewEntry = () => {
+  const createEntry = trpc.createEntry.useMutation()
+  const { postId } = useParams()
+  const { startEdit } = useMarkdownStore((state) => state.actions)
+  const trpcContext = useTrpcContext()
+  const blogpostId = postId ? parseInt(postId) : undefined
+
+  return async (index: number) => {
+    createEntry.mutateAsync({
+      blogpostId: blogpostId!, markdown: '', index
+    }, {
+      onSuccess: (entry) => {
+        startEdit(entry.id, entry.markdown)
+        trpcContext.getActiveBlogpost.invalidate()
+      }
+    })
+  }
+
 }

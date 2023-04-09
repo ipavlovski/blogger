@@ -13,13 +13,13 @@ const t = initTRPC.context<Context>().create({ transformer: superjson, })
 export const appRouter = t.router({
 
   createEntry: t.procedure.input(
-    z.object({ blogpostId: z.number(), markdown: z.string().min(3) })
-  ).mutation(async ({ input: { blogpostId, markdown } }) => {
-    return await h.createEntry(blogpostId, markdown)
+    z.object({ blogpostId: z.number(), markdown: z.string(), index: z.number().optional() })
+  ).mutation(async ({ input: { blogpostId, markdown, index } }) => {
+    return await h.createEntry(blogpostId, markdown, index)
   }),
 
   updateEntry: t.procedure.input(
-    z.object({ entryId: z.number(), markdown: z.string().min(3) })
+    z.object({ entryId: z.number(), markdown: z.string() })
   ).mutation(async ({ input: { entryId, markdown } }) => {
     return await h.updateEntry(entryId, markdown)
   }),

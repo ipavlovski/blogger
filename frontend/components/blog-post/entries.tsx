@@ -5,6 +5,7 @@ import { IconEdit, IconNewSection, IconPencil } from '@tabler/icons-react'
 import Editor from 'components/blog-post/editor2'
 
 import Remark from 'components/remark'
+import { useCreateNewEntry } from 'frontend/apis/queries'
 import { useMarkdownStore } from 'frontend/apis/stores'
 
 
@@ -73,17 +74,19 @@ function HoverControls({ hovered, initEdit, newEdit }:
 
 
 function EntryRenderer({ entry }: { entry: Entry }) {
-  const { id, markdown } = entry
+  const { id, markdown, index } = entry
   const { hovered, ref } = useHover()
   const { startEdit } = useMarkdownStore((state) => state.actions)
+  const createNewEntry = useCreateNewEntry()
 
   const initEdit = () => {
     console.log(`starting the edit for entryId:${id}`)
     startEdit(id, markdown)
   }
 
-  const newEdit = () => {
+  const newEdit = async () => {
     console.log(`starting new edit for id:${id}`)
+    await createNewEntry(index+1)
   }
 
   return (
