@@ -7,15 +7,34 @@ import TextAlign from '@tiptap/extension-text-align'
 import Underline from '@tiptap/extension-underline'
 import { useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
-import { useEffect, useState, ClipboardEvent } from 'react'
+import { useEffect, useState } from 'react'
 
-
+import { showNotification } from '@mantine/notifications'
+import ClipboardHandler from 'frontend/apis/clipboard'
 import { htmlToMarkdown, markdownToHtml } from 'frontend/apis/parsers'
 import { useCaptureMedia, useSaveEditorState, useTrpcContext } from 'frontend/apis/queries'
 import { useMarkdownStore } from 'frontend/apis/stores'
-import ClipboardHandler from 'frontend/apis/clipboard'
 import { SERVER_URL } from 'frontend/apis/utils'
-import { showNotification } from '@mantine/notifications'
+
+import { Mark, markPasteRule, mergeAttributes } from '@tiptap/core'
+
+const pasteRegex = /(?:^|\s)((?:~)((?:[^~]+))(?:~))/g
+const CustomMark = Mark.create({
+  name: 'customMark',
+  renderHTML({ HTMLAttributes }) {
+    return ['p', mergeAttributes(HTMLAttributes, { rel: this.options.rel }), 0]
+  },
+  addPasteRules() {
+    return [
+      markPasteRule({
+        find: pasteRegex,
+        type: this.type,
+
+      }),
+    ]
+  }
+})
+
 
 export default function Editor({ markdown }: {markdown: string}) {
 
@@ -35,11 +54,30 @@ export default function Editor({ markdown }: {markdown: string}) {
       Superscript,
       SubScript,
       Highlight,
+      CustomMark,
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
     ],
     onUpdate: ({ editor }) => {
       const html = editor.getHTML()
       setValue(html)
+    },
+    editorProps: {
+      handlePaste: function(view, event) {
+
+        if (event.clipboardData?.types?.[0] == 'Files') {
+          console.log('image...')
+          handlePaste().then((v) => view.pasteText(v || ''))
+          return true
+        }
+
+        const text = event.clipboardData?.getData('text')
+        if (text && /^data:.*:base64/.test(text)) {
+          handlePaste().then((v) => view.pasteText(v || ''))
+          return true
+        }
+
+        return false
+      }
     },
   })
 
@@ -66,18 +104,21 @@ export default function Editor({ markdown }: {markdown: string}) {
   }
 
 
-  const handlePaste = async (e: ClipboardEvent<HTMLDivElement>) => {
+  const handlePaste = async () => {
 
     try {
       const clipboard = await ClipboardHandler.create()
       const base64 = await clipboard.getImage() || await clipboard.getVideo()
 
       if (base64) {
-        e.stopPropagation()
-        e.preventDefault()
+
+        console.log(`before filename: ${base64.length}`)
+
 
         const filename = await captureMedia(base64)
         if (! filename) throw new Error('Failed to get proper filename back')
+
+        console.log(`filename: ${filename}`)
 
         const extension = filename.split('.').pop()
         let text = ''
@@ -93,12 +134,14 @@ export default function Editor({ markdown }: {markdown: string}) {
             throw new Error(`Unknown extension: ${extension}`)
         }
 
-        editor?.commands.insertContent(text)
+        // editor?.commands.insertContent(text)
+        return text
       }
 
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error'
       showNotification({ title: 'ctrl+v', message: msg, color: 'red', autoClose: 1600 })
+      return undefined
     }
   }
 
@@ -108,7 +151,9 @@ export default function Editor({ markdown }: {markdown: string}) {
       onKeyDown={getHotkeyHandler([
         ['Escape', handleEscape],
       ])}
-      onPasteCapture={handlePaste}
+      // onPasteCapture={handlePaste}
+      // onPaste={handlePaste}
+
       style={{ marginTop: 24 }}>
       <RichTextEditor.Toolbar sticky stickyOffset={60}>
         <RichTextEditor.ControlsGroup>
