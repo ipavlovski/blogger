@@ -36,7 +36,6 @@ export const useTrpcContext = () => trpc.useContext()
 ////////////// MUTATIONS
 
 // export const useUpdateEntry = () => trpc.updateEntry.useMutation()
-export const useCaptureMedia = () => trpc.captureMedia.useMutation()
 export const useCreateBlogpost = () => trpc.createBlogpost.useMutation()
 export const useUpdateBlogpost = () => trpc.updateBlogpost.useMutation()
 
@@ -152,5 +151,14 @@ export const useCreateNewEntry = () => {
       }
     })
   }
+}
 
+export const useCaptureMedia = () => {
+  const captureMedia = trpc.captureMedia.useMutation()
+  const { postId } = useParams()
+  const blogpostId = postId ? parseInt(postId) : undefined
+
+  return async (src: string) => {
+    return captureMedia.mutateAsync({ blogpostId: blogpostId!, src })
+  }
 }

@@ -2,7 +2,7 @@ import { ActionIcon, Box, Flex, HoverCard, Stack, createStyles } from '@mantine/
 import { useHover } from '@mantine/hooks'
 import { Entry } from '@prisma/client'
 import { IconEdit, IconNewSection, IconPencil } from '@tabler/icons-react'
-import Editor from 'components/blog-post/editor2'
+import Editor from 'components/blog-post/editor'
 
 import Remark from 'components/remark'
 import { useCreateNewEntry } from 'frontend/apis/queries'
