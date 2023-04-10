@@ -10,7 +10,7 @@ export default function Metadata({ blogpost }: {blogpost: BlogpostWithEntries}) 
   const { title, id, createdAt, updatedAt, tags, category } = blogpost
 
   return (
-    <Stack ml={72} mt={20} spacing={0}>
+    <Stack ml={72} pt={36} spacing={0}>
       <BlogpostTitle title={title} blogpostId={id}/>
 
       <Flex gap={32} align={'center'}>

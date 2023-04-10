@@ -18,7 +18,7 @@ const useStyles = createStyles((theme) => ({
     display: 'inline-block',
     color: theme.colors.cactus[0],
     fontWeight: 'bold',
-    fontSize: 24,
+    fontSize: 23,
   },
   dropdown: {
     display: 'inline-block',

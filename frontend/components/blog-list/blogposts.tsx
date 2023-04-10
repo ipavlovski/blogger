@@ -1,25 +1,9 @@
-import { ActionIcon, Flex, Text } from '@mantine/core'
-import { IconPlaylistAdd } from '@tabler/icons-react'
-import { useCreateBlogpost, useFilteredBlogposts } from 'frontend/apis/queries'
-import { Link, useNavigate } from 'react-router-dom'
+import { Flex, Text } from '@mantine/core'
+import { useFilteredBlogposts } from 'frontend/apis/queries'
+import { Link } from 'react-router-dom'
 
-export function NewPostButton() {
-  const createBlogpost = useCreateBlogpost()
-  const navigate = useNavigate()
 
-  const createNewPost = async () => {
-    const { id: postId } = await createBlogpost.mutateAsync()
-    navigate(`/posts/${postId}`)
-  }
-
-  return (
-    <ActionIcon onClick={createNewPost} size={42} radius="xl" variant="filled" color='cactus.1'>
-      <IconPlaylistAdd size={30} stroke={1.5}/>
-    </ActionIcon>
-  )
-}
-
-export function BlogpostList() {
+export default function BlogpostList() {
   const blogposts = useFilteredBlogposts()
 
   return(

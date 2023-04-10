@@ -7,7 +7,7 @@ const useStyles = createStyles(() => ({
     textDecoration: 'none',
     position: 'absolute',
     left: 20,
-    top: 8,
+    top: 16,
   }
 }))
 
