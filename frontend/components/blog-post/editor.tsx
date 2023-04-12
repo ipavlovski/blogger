@@ -14,7 +14,6 @@ import ClipboardHandler from 'frontend/apis/clipboard'
 import { htmlToMarkdown, markdownToHtml } from 'frontend/apis/parsers'
 import { useCaptureMedia, useSaveEditorState, useTrpcContext } from 'frontend/apis/queries'
 import { useMarkdownStore } from 'frontend/apis/stores'
-import { SERVER_URL } from 'frontend/apis/utils'
 
 import { Mark, markPasteRule, mergeAttributes } from '@tiptap/core'
 
@@ -110,8 +109,6 @@ export default function Editor({ markdown }: {markdown: string}) {
       const base64 = await clipboard.getImage() || await clipboard.getVideo()
 
       if (base64) {
-        // console.log(`before filename: ${base64.length}`)
-
         const filename = await captureMedia(base64)
         if (! filename) throw new Error('Failed to get proper filename back')
 
@@ -123,7 +120,7 @@ export default function Editor({ markdown }: {markdown: string}) {
             break
           case 'png':
           case 'jpeg':
-            text = `![](${SERVER_URL}/${filename})`
+            text = `::image{filename="${filename}"}`
             break
           default:
             throw new Error(`Unknown extension: ${extension}`)
@@ -145,9 +142,6 @@ export default function Editor({ markdown }: {markdown: string}) {
       onKeyDown={getHotkeyHandler([
         ['Escape', handleEscape],
       ])}
-      // onPasteCapture={handlePaste}
-      // onPaste={handlePaste}
-
       style={{ marginTop: 24 }}>
       <RichTextEditor.Toolbar sticky stickyOffset={60}>
         <RichTextEditor.ControlsGroup>

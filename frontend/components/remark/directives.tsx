@@ -54,6 +54,14 @@ function VideoDirective({ filename }: {filename: string}) {
 }
 
 
+function ImageDirective({ filename }: {filename: string}) {
+
+  return (
+    <img src={`${SERVER_URL}/${filename}`} style={{ objectFit: 'contain', width: '100%' }}/>
+  )
+}
+
+
 const directiveParser = z.discriminatedUnion('name', [
 
   z.object({ name: z.literal('youtube'), type: z.string() }),
@@ -61,6 +69,8 @@ const directiveParser = z.discriminatedUnion('name', [
   z.object({ name: z.literal('pdf'), type: z.string() }),
 
   z.object({ name: z.literal('video'), filename: z.string() }),
+
+  z.object({ name: z.literal('image'), filename: z.string() }),
 
   z.object({ name: z.literal('gallery') }),
 
@@ -105,6 +115,9 @@ export function DirectivesComponent({ children, node }: ReactMarkdownProps) {
 
     case 'video':
       return <VideoDirective filename={props.filename}/>
+
+    case 'image':
+      return <ImageDirective filename={props.filename}/>
 
     case 'error':
       return <h3>Error parsing directive.</h3>

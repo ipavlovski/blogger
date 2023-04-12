@@ -18,6 +18,13 @@ function extractNodeImages(nodes: ElementContent[]) {
   return images
 }
 
+// function extractNodeImages2(nodes: ElementContent[]) {
+//   const images: { src: string, alt: string}[] = []
+//   console.log(nodes[0])
+
+//   return images
+// }
+
 
 /**
  * ```
@@ -43,6 +50,7 @@ export default function GalleryDirective({ nodes }: {nodes: ElementContent[]}) {
   // get only gallery images
   // const images = input.filter(({ type }) => type == 'gallery')
   const images = extractNodeImages(nodes)
+  // console.log(`images: ${images}`)
   if (images.length == 0) return <div></div>
 
   const items = images.map((image, ind) => {
