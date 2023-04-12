@@ -13,6 +13,7 @@ export const blobToBase64 = async (blob: Blob) => {
 export default class ClipboardHandler {
   private contents: ClipboardItem | null = null
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {}
 
   public static create = async () => {

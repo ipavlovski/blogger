@@ -79,7 +79,7 @@ export async function captureMedia(blogpostId: number, src: string) {
     await rm(`${dir}/${basename}.unknown`, { force: true })
   }
 
-  return filename
+  return `${blogpostId}/${filename}`
 
 }
 

@@ -1,4 +1,5 @@
 import { getHotkeyHandler, useDebouncedState } from '@mantine/hooks'
+import { showNotification } from '@mantine/notifications'
 import { Link, RichTextEditor } from '@mantine/tiptap'
 import Highlight from '@tiptap/extension-highlight'
 import SubScript from '@tiptap/extension-subscript'
@@ -9,7 +10,6 @@ import { useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import { useEffect, useState } from 'react'
 
-import { showNotification } from '@mantine/notifications'
 import ClipboardHandler from 'frontend/apis/clipboard'
 import { htmlToMarkdown, markdownToHtml } from 'frontend/apis/parsers'
 import { useCaptureMedia, useSaveEditorState, useTrpcContext } from 'frontend/apis/queries'
@@ -65,7 +65,6 @@ export default function Editor({ markdown }: {markdown: string}) {
       handlePaste: function(view, event) {
 
         if (event.clipboardData?.types?.[0] == 'Files') {
-          console.log('image...')
           handlePaste().then((v) => view.pasteText(v || ''))
           return true
         }
@@ -111,30 +110,25 @@ export default function Editor({ markdown }: {markdown: string}) {
       const base64 = await clipboard.getImage() || await clipboard.getVideo()
 
       if (base64) {
-
-        console.log(`before filename: ${base64.length}`)
-
+        // console.log(`before filename: ${base64.length}`)
 
         const filename = await captureMedia(base64)
         if (! filename) throw new Error('Failed to get proper filename back')
-
-        console.log(`filename: ${filename}`)
 
         const extension = filename.split('.').pop()
         let text = ''
         switch (extension) {
           case 'mp4':
-            text = `::video{filename="capture/${filename}"}`
+            text = `::video{filename="${filename}"}`
             break
           case 'png':
           case 'jpeg':
-            text = `![](${SERVER_URL}/capture/${filename})`
+            text = `![](${SERVER_URL}/${filename})`
             break
           default:
             throw new Error(`Unknown extension: ${extension}`)
         }
 
-        // editor?.commands.insertContent(text)
         return text
       }
 
